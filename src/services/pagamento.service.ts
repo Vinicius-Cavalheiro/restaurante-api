@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { registrarAuditoria } from "./auditoria.service.js";
 
 interface ProcessarPagamentoDTO {
   pedidoId: number;
@@ -17,7 +18,6 @@ export async function processarPagamento(
     resultado,
   } = dados;
 
-  // 1. Busca o pedido completo
   const pedido = await prisma.pedido.findUnique({
     where: {
       id: pedidoId,
@@ -33,30 +33,30 @@ export async function processarPagamento(
     throw new Error("PEDIDO_NAO_ENCONTRADO");
   }
 
-  // 2. Impede pagamento duplicado
   if (pedido.pagamento) {
     throw new Error("PAGAMENTO_JA_PROCESSADO");
   }
 
-  // 3. Pedido precisa estar pendente
   if (pedido.status !== "PENDENTE") {
     throw new Error("STATUS_PEDIDO_INVALIDO");
   }
 
-  // =====================================================
+  // =====================================
   // PAGAMENTO RECUSADO
-  // =====================================================
+  // =====================================
 
   if (resultado === "RECUSADO") {
-    const pagamento = await prisma.pagamento.create({
-      data: {
-        pedidoId: pedido.id,
-        metodo,
-        status: "RECUSADO",
-        valor: pedido.valorTotal,
-        transacao: `MOCK-RECUSADO-${Date.now()}`,
-      },
-    });
+    const pagamento =
+      await prisma.pagamento.create({
+        data: {
+          pedidoId: pedido.id,
+          metodo,
+          status: "RECUSADO",
+          valor: pedido.valorTotal,
+          transacao:
+            `MOCK-RECUSADO-${Date.now()}`,
+        },
+      });
 
     await prisma.pedido.update({
       where: {
@@ -68,26 +68,42 @@ export async function processarPagamento(
       },
     });
 
+    await registrarAuditoria({
+      usuarioId,
+      acao: "PAGAMENTO_RECUSADO",
+      entidade: "PEDIDO",
+      entidadeId: pedido.id,
+
+      detalhes: {
+        metodo,
+        valor: Number(pedido.valorTotal),
+        statusAnterior: "PENDENTE",
+        statusNovo: "CANCELADO",
+        transacao: pagamento.transacao ?? "",
+      },
+    });
+
     return {
       pagamento,
       statusPedido: "CANCELADO",
     };
   }
 
-  // =====================================================
+  // =====================================
   // PAGAMENTO APROVADO
-  // =====================================================
+  // =====================================
 
-  // Antes de aprovar, valida novamente o estoque de todos os itens
+  // Revalida estoque antes de cobrar/confirmar
   for (const item of pedido.itens) {
-    const estoque = await prisma.estoque.findUnique({
-      where: {
-        unidadeId_produtoId: {
-          unidadeId: pedido.unidadeId,
-          produtoId: item.produtoId,
+    const estoque =
+      await prisma.estoque.findUnique({
+        where: {
+          unidadeId_produtoId: {
+            unidadeId: pedido.unidadeId,
+            produtoId: item.produtoId,
+          },
         },
-      },
-    });
+      });
 
     if (
       !estoque ||
@@ -97,18 +113,19 @@ export async function processarPagamento(
     }
   }
 
-  // 4. Cria o pagamento aprovado
-  const pagamento = await prisma.pagamento.create({
-    data: {
-      pedidoId: pedido.id,
-      metodo,
-      status: "APROVADO",
-      valor: pedido.valorTotal,
-      transacao: `MOCK-APROVADO-${Date.now()}`,
-    },
-  });
+  const pagamento =
+    await prisma.pagamento.create({
+      data: {
+        pedidoId: pedido.id,
+        metodo,
+        status: "APROVADO",
+        valor: pedido.valorTotal,
+        transacao:
+          `MOCK-APROVADO-${Date.now()}`,
+      },
+    });
 
-  // 5. Baixa estoque item por item
+  // Baixa estoque
   for (const item of pedido.itens) {
     await prisma.estoque.update({
       where: {
@@ -125,7 +142,7 @@ export async function processarPagamento(
       },
     });
 
-    // Auditoria automática
+    // Histórico de estoque
     await prisma.movimentacaoEstoque.create({
       data: {
         unidadeId: pedido.unidadeId,
@@ -137,24 +154,49 @@ export async function processarPagamento(
     });
   }
 
-  // 6. Confirma pedido
-  const pedidoAtualizado = await prisma.pedido.update({
-    where: {
-      id: pedido.id,
-    },
-
-    data: {
-      status: "CONFIRMADO",
-    },
-
-    include: {
-      itens: {
-        include: {
-          produto: true,
-        },
+  const pedidoAtualizado =
+    await prisma.pedido.update({
+      where: {
+        id: pedido.id,
       },
 
-      pagamento: true,
+      data: {
+        status: "CONFIRMADO",
+      },
+
+      include: {
+        itens: {
+          include: {
+            produto: true,
+          },
+        },
+
+        pagamento: true,
+        unidade: true,
+
+        usuario: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            perfil: true,
+          },
+        },
+      },
+    });
+
+  await registrarAuditoria({
+    usuarioId,
+    acao: "PAGAMENTO_APROVADO",
+    entidade: "PEDIDO",
+    entidadeId: pedido.id,
+
+    detalhes: {
+      metodo,
+      valor: Number(pedido.valorTotal),
+      statusAnterior: "PENDENTE",
+      statusNovo: "CONFIRMADO",
+      transacao: pagamento.transacao ?? "",
     },
   });
 

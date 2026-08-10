@@ -1,9 +1,17 @@
-import type { Request, Response } from "express";
-import { criarPedido, 
-    atualizarStatusPedido 
- } from "../services/pedido.service.js";
+import type {
+  Request,
+  Response,
+} from "express";
 
-export async function create(req: Request, res: Response) {
+import {
+  criarPedido,
+  atualizarStatusPedido,
+} from "../services/pedido.service.js";
+
+export async function create(
+  req: Request,
+  res: Response
+) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -12,7 +20,11 @@ export async function create(req: Request, res: Response) {
       });
     }
 
-    const { unidadeId, canalPedido, itens } = req.body;
+    const {
+      unidadeId,
+      canalPedido,
+      itens,
+    } = req.body;
 
     if (
       unidadeId === undefined ||
@@ -21,30 +33,46 @@ export async function create(req: Request, res: Response) {
     ) {
       return res.status(400).json({
         error: "CAMPOS_OBRIGATORIOS",
-        message: "Unidade, canal e itens são obrigatórios.",
+        message:
+          "Unidade, canalPedido e itens são obrigatórios.",
       });
     }
 
-    if (!Number.isInteger(Number(unidadeId)) || Number(unidadeId) <= 0) {
+    if (
+      !Number.isInteger(Number(unidadeId)) ||
+      Number(unidadeId) <= 0
+    ) {
       return res.status(422).json({
         error: "UNIDADE_INVALIDA",
-        message: "A unidade informada é inválida.",
+        message:
+          "A unidade informada é inválida.",
       });
     }
 
-    const canaisPermitidos = ["BALCAO", "APP", "DELIVERY"];
+    const canaisPermitidos = [
+      "BALCAO",
+      "APP",
+      "DELIVERY",
+    ];
 
-    if (!canaisPermitidos.includes(canalPedido)) {
+    if (
+      !canaisPermitidos.includes(canalPedido)
+    ) {
       return res.status(422).json({
         error: "CANAL_INVALIDO",
-        message: "O canal deve ser BALCAO, APP ou DELIVERY.",
+        message:
+          "O canalPedido deve ser BALCAO, APP ou DELIVERY.",
       });
     }
 
-    if (!Array.isArray(itens) || itens.length === 0) {
+    if (
+      !Array.isArray(itens) ||
+      itens.length === 0
+    ) {
       return res.status(422).json({
         error: "PEDIDO_SEM_ITENS",
-        message: "O pedido deve possuir pelo menos um item.",
+        message:
+          "O pedido deve possuir pelo menos um item.",
       });
     }
 
@@ -56,54 +84,92 @@ export async function create(req: Request, res: Response) {
     });
 
     return res.status(201).json({
-      message: "Pedido criado com sucesso.",
+      message:
+        "Pedido criado com sucesso.",
       pedido,
     });
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message === "PEDIDO_SEM_ITENS") {
+      if (
+        error.message ===
+        "PEDIDO_SEM_ITENS"
+      ) {
         return res.status(422).json({
           error: "PEDIDO_SEM_ITENS",
-          message: "O pedido deve possuir pelo menos um item.",
+          message:
+            "O pedido deve possuir pelo menos um item.",
         });
       }
 
-      if (error.message === "PRODUTO_INVALIDO") {
+      if (
+        error.message ===
+        "UNIDADE_INVALIDA"
+      ) {
+        return res.status(404).json({
+          error: "UNIDADE_INVALIDA",
+          message:
+            "Unidade não encontrada ou inativa.",
+        });
+      }
+
+      if (
+        error.message ===
+        "PRODUTO_INVALIDO"
+      ) {
         return res.status(404).json({
           error: "PRODUTO_INVALIDO",
-          message: "Produto não encontrado ou inativo.",
+          message:
+            "Produto não encontrado ou inativo.",
         });
       }
 
-      if (error.message === "QUANTIDADE_INVALIDA") {
+      if (
+        error.message ===
+        "QUANTIDADE_INVALIDA"
+      ) {
         return res.status(422).json({
           error: "QUANTIDADE_INVALIDA",
-          message: "A quantidade dos produtos deve ser maior que zero.",
+          message:
+            "A quantidade dos produtos deve ser maior que zero.",
         });
-      
-    }
-        if (error.message === "ESTOQUE_INSUFICIENTE") {
-  return res.status(409).json({
-    error: "ESTOQUE_INSUFICIENTE",
-    message: "Estoque insuficiente para realizar o pedido.",
-  });
-}
+      }
+
+      if (
+        error.message ===
+        "ESTOQUE_INSUFICIENTE"
+      ) {
+        return res.status(409).json({
+          error: "ESTOQUE_INSUFICIENTE",
+          message:
+            "Estoque insuficiente para realizar o pedido.",
+        });
+      }
     }
 
     console.error(error);
 
     return res.status(500).json({
       error: "ERRO_INTERNO",
-      message: "Erro interno do servidor.",
+      message:
+        "Erro interno do servidor.",
     });
   }
 }
+
 export async function updateStatus(
   req: Request,
   res: Response
 ) {
   try {
-    const pedidoId = Number(req.params.id);
+    if (!req.user) {
+      return res.status(401).json({
+        error: "NAO_AUTENTICADO",
+        message: "Usuário não autenticado.",
+      });
+    }
+
+    const pedidoId =
+      Number(req.params.id);
 
     if (
       !Number.isInteger(pedidoId) ||
@@ -111,7 +177,8 @@ export async function updateStatus(
     ) {
       return res.status(400).json({
         error: "PEDIDO_INVALIDO",
-        message: "O ID do pedido é inválido.",
+        message:
+          "O ID do pedido é inválido.",
       });
     }
 
@@ -123,7 +190,9 @@ export async function updateStatus(
       "FINALIZADO",
     ];
 
-    if (!statusPermitidos.includes(status)) {
+    if (
+      !statusPermitidos.includes(status)
+    ) {
       return res.status(422).json({
         error: "STATUS_INVALIDO",
         message:
@@ -131,21 +200,29 @@ export async function updateStatus(
       });
     }
 
-    const pedido = await atualizarStatusPedido(
-      pedidoId,
-      status
-    );
+    const pedido =
+      await atualizarStatusPedido(
+        pedidoId,
+        status,
+        req.user.id
+      );
 
     return res.status(200).json({
-      message: "Status do pedido atualizado com sucesso.",
+      message:
+        "Status do pedido atualizado com sucesso.",
       pedido,
     });
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message === "PEDIDO_NAO_ENCONTRADO") {
+      if (
+        error.message ===
+        "PEDIDO_NAO_ENCONTRADO"
+      ) {
         return res.status(404).json({
-          error: "PEDIDO_NAO_ENCONTRADO",
-          message: "Pedido não encontrado.",
+          error:
+            "PEDIDO_NAO_ENCONTRADO",
+          message:
+            "Pedido não encontrado.",
         });
       }
 
@@ -154,7 +231,8 @@ export async function updateStatus(
         "PEDIDO_AGUARDANDO_PAGAMENTO"
       ) {
         return res.status(409).json({
-          error: "PEDIDO_AGUARDANDO_PAGAMENTO",
+          error:
+            "PEDIDO_AGUARDANDO_PAGAMENTO",
           message:
             "O pedido precisa ter pagamento aprovado antes de avançar.",
         });
@@ -165,7 +243,8 @@ export async function updateStatus(
         "TRANSICAO_STATUS_INVALIDA"
       ) {
         return res.status(409).json({
-          error: "TRANSICAO_STATUS_INVALIDA",
+          error:
+            "TRANSICAO_STATUS_INVALIDA",
           message:
             "A transição de status solicitada não é permitida.",
         });
@@ -176,7 +255,8 @@ export async function updateStatus(
 
     return res.status(500).json({
       error: "ERRO_INTERNO",
-      message: "Erro interno do servidor.",
+      message:
+        "Erro interno do servidor.",
     });
   }
 }

@@ -1,10 +1,16 @@
-import type { Request, Response } from "express";
+import type {
+  Request,
+  Response,
+} from "express";
 
 import {
   processarPagamento,
 } from "../services/pagamento.service.js";
 
-export async function pagar(req: Request, res: Response) {
+export async function pagar(
+  req: Request,
+  res: Response
+) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -13,7 +19,8 @@ export async function pagar(req: Request, res: Response) {
       });
     }
 
-    const pedidoId = Number(req.params.id);
+    const pedidoId =
+      Number(req.params.id);
 
     if (
       !Number.isInteger(pedidoId) ||
@@ -21,7 +28,8 @@ export async function pagar(req: Request, res: Response) {
     ) {
       return res.status(400).json({
         error: "PEDIDO_INVALIDO",
-        message: "O ID do pedido é inválido.",
+        message:
+          "O ID do pedido é inválido.",
       });
     }
 
@@ -35,22 +43,30 @@ export async function pagar(req: Request, res: Response) {
       "CARTAO",
     ];
 
+    if (
+      !metodosPermitidos.includes(metodo)
+    ) {
+      return res.status(422).json({
+        error: "METODO_INVALIDO",
+        message:
+          "O método deve ser PIX ou CARTAO.",
+      });
+    }
+
     const resultadosPermitidos = [
       "APROVADO",
       "RECUSADO",
     ];
 
-    if (!metodosPermitidos.includes(metodo)) {
-      return res.status(422).json({
-        error: "METODO_INVALIDO",
-        message: "O método deve ser PIX ou CARTAO.",
-      });
-    }
-
-    if (!resultadosPermitidos.includes(resultado)) {
+    if (
+      !resultadosPermitidos.includes(
+        resultado
+      )
+    ) {
       return res.status(422).json({
         error: "RESULTADO_INVALIDO",
-        message: "O resultado deve ser APROVADO ou RECUSADO.",
+        message:
+          "O resultado deve ser APROVADO ou RECUSADO.",
       });
     }
 
@@ -67,36 +83,56 @@ export async function pagar(req: Request, res: Response) {
         resultado === "APROVADO"
           ? "Pagamento aprovado com sucesso."
           : "Pagamento recusado.",
+
       ...resultadoPagamento,
     });
-
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message === "PEDIDO_NAO_ENCONTRADO") {
+      if (
+        error.message ===
+        "PEDIDO_NAO_ENCONTRADO"
+      ) {
         return res.status(404).json({
-          error: "PEDIDO_NAO_ENCONTRADO",
-          message: "Pedido não encontrado.",
+          error:
+            "PEDIDO_NAO_ENCONTRADO",
+          message:
+            "Pedido não encontrado.",
         });
       }
 
-      if (error.message === "PAGAMENTO_JA_PROCESSADO") {
+      if (
+        error.message ===
+        "PAGAMENTO_JA_PROCESSADO"
+      ) {
         return res.status(409).json({
-          error: "PAGAMENTO_JA_PROCESSADO",
-          message: "Este pedido já possui um pagamento processado.",
+          error:
+            "PAGAMENTO_JA_PROCESSADO",
+          message:
+            "Este pedido já possui um pagamento processado.",
         });
       }
 
-      if (error.message === "STATUS_PEDIDO_INVALIDO") {
+      if (
+        error.message ===
+        "STATUS_PEDIDO_INVALIDO"
+      ) {
         return res.status(409).json({
-          error: "STATUS_PEDIDO_INVALIDO",
-          message: "O pedido não está disponível para pagamento.",
+          error:
+            "STATUS_PEDIDO_INVALIDO",
+          message:
+            "O pedido não está disponível para pagamento.",
         });
       }
 
-      if (error.message === "ESTOQUE_INSUFICIENTE") {
+      if (
+        error.message ===
+        "ESTOQUE_INSUFICIENTE"
+      ) {
         return res.status(409).json({
-          error: "ESTOQUE_INSUFICIENTE",
-          message: "O estoque não é suficiente para confirmar o pedido.",
+          error:
+            "ESTOQUE_INSUFICIENTE",
+          message:
+            "O estoque não é suficiente para confirmar o pedido.",
         });
       }
     }
@@ -105,7 +141,8 @@ export async function pagar(req: Request, res: Response) {
 
     return res.status(500).json({
       error: "ERRO_INTERNO",
-      message: "Erro interno do servidor.",
+      message:
+        "Erro interno do servidor.",
     });
   }
 }

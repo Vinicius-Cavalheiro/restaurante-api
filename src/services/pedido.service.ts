@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { registrarAuditoria } from "./auditoria.service.js";
 
 interface ItemPedidoDTO {
   produtoId: number;
@@ -24,12 +25,27 @@ export async function criarPedido(dados: CriarPedidoDTO) {
     throw new Error("PEDIDO_SEM_ITENS");
   }
 
+  // Valida unidade
+  const unidade = await prisma.unidade.findUnique({
+    where: {
+      id: unidadeId,
+    },
+  });
+
+  if (!unidade || !unidade.ativo) {
+    throw new Error("UNIDADE_INVALIDA");
+  }
+
   let valorTotal = 0;
 
-  const itensCalculados = [];
+  const itensCalculados: {
+    produtoId: number;
+    quantidade: number;
+    precoUnitario: number;
+    subtotal: number;
+  }[] = [];
 
   for (const item of itens) {
-    // Valida quantidade
     if (
       !Number.isInteger(item.quantidade) ||
       item.quantidade <= 0
@@ -37,7 +53,6 @@ export async function criarPedido(dados: CriarPedidoDTO) {
       throw new Error("QUANTIDADE_INVALIDA");
     }
 
-    // Busca produto
     const produto = await prisma.produto.findUnique({
       where: {
         id: item.produtoId,
@@ -48,7 +63,6 @@ export async function criarPedido(dados: CriarPedidoDTO) {
       throw new Error("PRODUTO_INVALIDO");
     }
 
-    // Busca estoque do produto na unidade escolhida
     const estoque = await prisma.estoque.findUnique({
       where: {
         unidadeId_produtoId: {
@@ -58,17 +72,13 @@ export async function criarPedido(dados: CriarPedidoDTO) {
       },
     });
 
-    // Produto não possui estoque nessa unidade
-    if (!estoque) {
+    if (
+      !estoque ||
+      estoque.quantidade < item.quantidade
+    ) {
       throw new Error("ESTOQUE_INSUFICIENTE");
     }
 
-    // Quantidade solicitada maior que o estoque disponível
-    if (estoque.quantidade < item.quantidade) {
-      throw new Error("ESTOQUE_INSUFICIENTE");
-    }
-
-    // Preço sempre vem do banco
     const precoUnitario = Number(produto.preco);
 
     const subtotal =
@@ -84,8 +94,6 @@ export async function criarPedido(dados: CriarPedidoDTO) {
     });
   }
 
-  // Só cria o pedido depois que TODOS os itens
-  // passaram pelas validações
   const pedido = await prisma.pedido.create({
     data: {
       usuarioId,
@@ -114,13 +122,29 @@ export async function criarPedido(dados: CriarPedidoDTO) {
           produto: true,
         },
       },
+
+      pagamento: true,
+    },
+  });
+
+  // Auditoria automática
+  await registrarAuditoria({
+    usuarioId,
+    acao: "PEDIDO_CRIADO",
+    entidade: "PEDIDO",
+    entidadeId: pedido.id,
+
+    detalhes: {
+      unidadeId: pedido.unidadeId,
+      canalPedido: pedido.canalPedido,
+      valorTotal: Number(pedido.valorTotal),
     },
   });
 
   return pedido;
 }
 
-type StatusPermitido =
+type StatusOperacional =
   | "CONFIRMADO"
   | "EM_PREPARO"
   | "PRONTO"
@@ -128,8 +152,8 @@ type StatusPermitido =
   | "CANCELADO";
 
 const transicoesPermitidas: Record<
-  StatusPermitido,
-  StatusPermitido[]
+  StatusOperacional,
+  StatusOperacional[]
 > = {
   CONFIRMADO: ["EM_PREPARO"],
   EM_PREPARO: ["PRONTO"],
@@ -140,7 +164,8 @@ const transicoesPermitidas: Record<
 
 export async function atualizarStatusPedido(
   pedidoId: number,
-  novoStatus: StatusPermitido
+  novoStatus: StatusOperacional,
+  usuarioId: number
 ) {
   const pedido = await prisma.pedido.findUnique({
     where: {
@@ -153,45 +178,68 @@ export async function atualizarStatusPedido(
   }
 
   if (pedido.status === "PENDENTE") {
-    throw new Error("PEDIDO_AGUARDANDO_PAGAMENTO");
+    throw new Error(
+      "PEDIDO_AGUARDANDO_PAGAMENTO"
+    );
   }
 
-  const statusAtual = pedido.status as StatusPermitido;
+  const statusAtual =
+    pedido.status as StatusOperacional;
 
   const permitidos =
     transicoesPermitidas[statusAtual] ?? [];
 
   if (!permitidos.includes(novoStatus)) {
-    throw new Error("TRANSICAO_STATUS_INVALIDA");
+    throw new Error(
+      "TRANSICAO_STATUS_INVALIDA"
+    );
   }
 
-  return prisma.pedido.update({
-    where: {
-      id: pedidoId,
-    },
+  const statusAnterior = pedido.status;
 
-    data: {
-      status: novoStatus,
-    },
-
-    include: {
-      itens: {
-        include: {
-          produto: true,
-        },
+  const pedidoAtualizado =
+    await prisma.pedido.update({
+      where: {
+        id: pedidoId,
       },
 
-      pagamento: true,
-      unidade: true,
+      data: {
+        status: novoStatus,
+      },
 
-      usuario: {
-        select: {
-          id: true,
-          nome: true,
-          email: true,
-          perfil: true,
+      include: {
+        itens: {
+          include: {
+            produto: true,
+          },
+        },
+
+        pagamento: true,
+        unidade: true,
+
+        usuario: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            perfil: true,
+          },
         },
       },
+    });
+
+  // Auditoria da mudança de status
+  await registrarAuditoria({
+    usuarioId,
+    acao: "STATUS_PEDIDO_ALTERADO",
+    entidade: "PEDIDO",
+    entidadeId: pedidoId,
+
+    detalhes: {
+      statusAnterior,
+      statusNovo: novoStatus,
     },
   });
+
+  return pedidoAtualizado;
 }

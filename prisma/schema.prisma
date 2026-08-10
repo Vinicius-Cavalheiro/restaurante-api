@@ -57,6 +57,7 @@ model Usuario {
 
   movimentacoesEstoque MovimentacaoEstoque[]
   pedidos              Pedido[]
+  auditorias           Auditoria[]
 
   @@map("usuarios")
 }
@@ -182,4 +183,20 @@ model Pagamento {
   pedido Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
 
   @@map("pagamentos")
+}
+
+model Auditoria {
+  id         Int      @id @default(autoincrement())
+  usuarioId  Int
+  acao       String   @db.VarChar(80)
+  entidade   String   @db.VarChar(80)
+  entidadeId Int
+  detalhes   Json?
+  createdAt  DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId])
+  @@index([entidade, entidadeId])
+  @@map("auditorias")
 }
