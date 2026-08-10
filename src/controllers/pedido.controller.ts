@@ -6,7 +6,62 @@ import type {
 import {
   criarPedido,
   atualizarStatusPedido,
+  listarPedidos,
 } from "../services/pedido.service.js";
+
+export async function list(
+  req: Request,
+  res: Response
+) {
+  try {
+    const canalPedidoParam =
+      req.query.canalPedido;
+
+    const canaisPermitidos = [
+      "BALCAO",
+      "APP",
+      "DELIVERY",
+    ];
+
+    if (
+      canalPedidoParam !== undefined &&
+      (
+        typeof canalPedidoParam !== "string" ||
+        !canaisPermitidos.includes(
+          canalPedidoParam
+        )
+      )
+    ) {
+      return res.status(400).json({
+        error: "CANAL_PEDIDO_INVALIDO",
+        message:
+          "O canalPedido informado é inválido.",
+      });
+    }
+
+    const pedidos =
+      canalPedidoParam !== undefined
+        ? await listarPedidos(
+            canalPedidoParam as
+              | "BALCAO"
+              | "APP"
+              | "DELIVERY"
+          )
+        : await listarPedidos();
+
+    return res.status(200).json({
+      pedidos,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      error: "ERRO_INTERNO",
+      message:
+        "Erro interno do servidor.",
+    });
+  }
+}
 
 export async function create(
   req: Request,

@@ -1,6 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { registrarAuditoria } from "./auditoria.service.js";
-
+import { creditarPontosPedido } from "./fidelidade.service.js";
 interface ItemPedidoDTO {
   produtoId: number;
   quantidade: number;
@@ -229,17 +229,114 @@ export async function atualizarStatusPedido(
     });
 
   // Auditoria da mudança de status
-  await registrarAuditoria({
-    usuarioId,
-    acao: "STATUS_PEDIDO_ALTERADO",
-    entidade: "PEDIDO",
-    entidadeId: pedidoId,
+ await registrarAuditoria({
+  usuarioId,
+  acao: "STATUS_PEDIDO_ALTERADO",
+  entidade: "PEDIDO",
+  entidadeId: pedidoId,
 
-    detalhes: {
-      statusAnterior,
-      statusNovo: novoStatus,
-    },
-  });
+  detalhes: {
+    statusAnterior,
+    statusNovo: novoStatus,
+  },
+});
+
+// Fidelização:
+// os pontos são concedidos somente
+// quando o pedido chega a FINALIZADO.
+if (novoStatus === "FINALIZADO") {
+  const pontos = await creditarPontosPedido(
+    pedidoId
+  );
+
+  if (pontos > 0) {
+    await registrarAuditoria({
+      usuarioId,
+      acao: "PONTOS_FIDELIDADE_CREDITADOS",
+      entidade: "PEDIDO",
+      entidadeId: pedidoId,
+
+      detalhes: {
+        pontos,
+        usuarioBeneficiadoId:
+          pedidoAtualizado.usuarioId,
+        valorPedido: Number(
+          pedidoAtualizado.valorTotal
+        ),
+      },
+    });
+  }
+}
+
+
 
   return pedidoAtualizado;
+}
+type CanalPedidoFiltro =
+  | "BALCAO"
+  | "APP"
+  | "DELIVERY";
+
+export async function listarPedidos(
+  canalPedido?: CanalPedidoFiltro
+) {
+  if (canalPedido !== undefined) {
+    return prisma.pedido.findMany({
+      where: {
+        canalPedido,
+      },
+
+      include: {
+        unidade: true,
+
+        usuario: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            perfil: true,
+          },
+        },
+
+        itens: {
+          include: {
+            produto: true,
+          },
+        },
+
+        pagamento: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
+  return prisma.pedido.findMany({
+    include: {
+      unidade: true,
+
+      usuario: {
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          perfil: true,
+        },
+      },
+
+      itens: {
+        include: {
+          produto: true,
+        },
+      },
+
+      pagamento: true,
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 }
