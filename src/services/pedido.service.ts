@@ -8,7 +8,7 @@ interface ItemPedidoDTO {
 interface CriarPedidoDTO {
   usuarioId: number;
   unidadeId: number;
-  canal: "BALCAO" | "APP" | "DELIVERY";
+  canalPedido: "BALCAO" | "APP" | "DELIVERY";
   itens: ItemPedidoDTO[];
 }
 
@@ -16,7 +16,7 @@ export async function criarPedido(dados: CriarPedidoDTO) {
   const {
     usuarioId,
     unidadeId,
-    canal,
+    canalPedido,
     itens,
   } = dados;
 
@@ -90,7 +90,7 @@ export async function criarPedido(dados: CriarPedidoDTO) {
     data: {
       usuarioId,
       unidadeId,
-      canal,
+      canalPedido,
       valorTotal,
 
       itens: {

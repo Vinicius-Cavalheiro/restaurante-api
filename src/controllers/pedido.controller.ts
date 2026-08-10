@@ -12,11 +12,11 @@ export async function create(req: Request, res: Response) {
       });
     }
 
-    const { unidadeId, canal, itens } = req.body;
+    const { unidadeId, canalPedido, itens } = req.body;
 
     if (
       unidadeId === undefined ||
-      canal === undefined ||
+      canalPedido === undefined ||
       itens === undefined
     ) {
       return res.status(400).json({
@@ -34,7 +34,7 @@ export async function create(req: Request, res: Response) {
 
     const canaisPermitidos = ["BALCAO", "APP", "DELIVERY"];
 
-    if (!canaisPermitidos.includes(canal)) {
+    if (!canaisPermitidos.includes(canalPedido)) {
       return res.status(422).json({
         error: "CANAL_INVALIDO",
         message: "O canal deve ser BALCAO, APP ou DELIVERY.",
@@ -51,7 +51,7 @@ export async function create(req: Request, res: Response) {
     const pedido = await criarPedido({
       usuarioId: req.user.id,
       unidadeId: Number(unidadeId),
-      canal,
+      canalPedido,
       itens,
     });
 

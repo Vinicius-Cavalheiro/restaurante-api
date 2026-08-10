@@ -133,14 +133,14 @@ model MovimentacaoEstoque {
 }
 
 model Pedido {
-  id         Int          @id @default(autoincrement())
-  usuarioId  Int
-  unidadeId  Int
-  status     StatusPedido @default(PENDENTE)
-  canal      CanalPedido
-  valorTotal Decimal      @default(0) @db.Decimal(10, 2)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  id          Int          @id @default(autoincrement())
+  usuarioId   Int
+  unidadeId   Int
+  status      StatusPedido @default(PENDENTE)
+  canalPedido CanalPedido  @map("canal")
+  valorTotal  Decimal      @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   usuario Usuario @relation(fields: [usuarioId], references: [id])
   unidade Unidade @relation(fields: [unidadeId], references: [id])
