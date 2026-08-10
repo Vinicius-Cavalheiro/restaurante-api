@@ -14,6 +14,11 @@ enum Perfil {
   CLIENTE
 }
 
+enum TipoMovimentacao {
+  ENTRADA
+  SAIDA
+}
+
 model Usuario {
   id        Int      @id @default(autoincrement())
   nome      String   @db.VarChar(120)
@@ -24,8 +29,11 @@ model Usuario {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  movimentacoesEstoque MovimentacaoEstoque[]
+
   @@map("usuarios")
 }
+
 model Unidade {
   id        Int      @id @default(autoincrement())
   nome      String   @db.VarChar(120)
@@ -35,8 +43,12 @@ model Unidade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  estoques             Estoque[]
+  movimentacoesEstoque MovimentacaoEstoque[]
+
   @@map("unidades")
 }
+
 model Produto {
   id        Int      @id @default(autoincrement())
   nome      String   @db.VarChar(120)
@@ -49,5 +61,44 @@ model Produto {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  estoques             Estoque[]
+  movimentacoesEstoque MovimentacaoEstoque[]
+
   @@map("produtos")
+}
+
+model Estoque {
+  id         Int      @id @default(autoincrement())
+  unidadeId  Int
+  produtoId  Int
+  quantidade Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  unidade Unidade @relation(fields: [unidadeId], references: [id])
+  produto Produto @relation(fields: [produtoId], references: [id])
+
+  @@unique([unidadeId, produtoId])
+  @@index([unidadeId])
+  @@index([produtoId])
+  @@map("estoques")
+}
+
+model MovimentacaoEstoque {
+  id         Int              @id @default(autoincrement())
+  unidadeId  Int
+  produtoId  Int
+  usuarioId  Int
+  tipo       TipoMovimentacao
+  quantidade Int
+  createdAt  DateTime         @default(now())
+
+  unidade Unidade @relation(fields: [unidadeId], references: [id])
+  produto Produto @relation(fields: [produtoId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@index([unidadeId])
+  @@index([produtoId])
+  @@index([usuarioId])
+  @@map("movimentacoes_estoque")
 }

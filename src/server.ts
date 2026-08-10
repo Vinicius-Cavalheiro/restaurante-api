@@ -1,9 +1,11 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { unidadeRoutes } from "./routes/unidade.routes.js";
-import { authRoutes }  from "./routes/auth.routes.js";
-import "dotenv/config";
 
+import { authRoutes } from "./routes/auth.routes.js";
+import { unidadeRoutes } from "./routes/unidade.routes.js";
+import { produtoRoutes } from "./routes/produto.routes.js";
+import { estoqueRoutes } from "./routes/estoque.routes.js";
 
 const app = express();
 
@@ -18,6 +20,8 @@ app.get("/", (req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/unidades", unidadeRoutes);
+app.use("/produtos", produtoRoutes);
+app.use("/estoques", estoqueRoutes);
 
 const PORT = process.env.PORT || 3000;
 
