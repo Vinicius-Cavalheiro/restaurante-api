@@ -590,6 +590,42 @@ APROVADO
 
 Esse teste comprova que o canal é persistido e pode ser utilizado como critério de consulta.
 
+## T20a — Pedido pelo canal TOTEM
+
+**Entrada**
+
+{
+  "canalPedido": "TOTEM"
+}
+
+**Resultado esperado**
+
+201 Created
+
+O pedido deve ser persistido com o canal TOTEM.
+
+**Resultado obtido**
+
+APROVADO
+
+---
+
+## T20b — Filtro pelo canal TOTEM
+
+**Endpoint**
+
+GET /pedidos?canalPedido=TOTEM
+
+**Resultado esperado**
+
+200 OK
+
+A API deve retornar somente os pedidos associados ao canal TOTEM.
+
+**Resultado obtido**
+
+APROVADO
+
 ---
 
 # 10. Pagamento
@@ -982,7 +1018,7 @@ Auditoria
 
 As evidências dos testes foram registradas através de capturas de tela das requisições realizadas no Insomnia e Swagger.
 
-Sugestão de organização:
+
 
 ```text
 docs/

@@ -32,6 +32,9 @@ enum CanalPedido {
   BALCAO
   APP
   DELIVERY
+  TOTEM
+  PICKUP
+  WEB
 }
 
 enum StatusPagamento {

@@ -21,6 +21,9 @@ export async function list(
       "BALCAO",
       "APP",
       "DELIVERY",
+      "TOTEM",
+      "PICKUP",
+      "WEB",
     ];
 
     if (
@@ -46,6 +49,9 @@ export async function list(
               | "BALCAO"
               | "APP"
               | "DELIVERY"
+              | "TOTEM"
+              | "PICKUP"
+              | "WEB"
           )
         : await listarPedidos();
 
@@ -108,6 +114,9 @@ export async function create(
       "BALCAO",
       "APP",
       "DELIVERY",
+      "TOTEM",
+      "PICKUP",
+      "WEB",
     ];
 
     if (
@@ -116,7 +125,7 @@ export async function create(
       return res.status(422).json({
         error: "CANAL_INVALIDO",
         message:
-          "O canalPedido deve ser BALCAO, APP ou DELIVERY.",
+          "O canalPedido deve ser BALCAO, APP, DELIVERY, TOTEM, PICKUP ou WEB.",
       });
     }
 

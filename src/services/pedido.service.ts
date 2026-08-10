@@ -10,7 +10,13 @@ interface ItemPedidoDTO {
 interface CriarPedidoDTO {
   usuarioId: number;
   unidadeId: number;
-  canalPedido: "BALCAO" | "APP" | "DELIVERY";
+canalPedido:
+  | "BALCAO"
+  | "APP"
+  | "DELIVERY"
+  | "TOTEM"
+  | "PICKUP"
+  | "WEB";
   itens: ItemPedidoDTO[];
 }
 
@@ -275,7 +281,10 @@ export async function atualizarStatusPedido(
 type CanalPedidoFiltro =
   | "BALCAO"
   | "APP"
-  | "DELIVERY";
+  | "DELIVERY"
+  | "TOTEM"
+  | "PICKUP"
+  | "WEB";
 
 export async function listarPedidos(
   canalPedido?: CanalPedidoFiltro
