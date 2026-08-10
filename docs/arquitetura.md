@@ -313,3 +313,9 @@ Fidelização;
 Auditoria;
 Swagger;
 Testes.
+
+### Auditoria de Estoque
+
+As entradas e saídas de estoque geram automaticamente registros de movimentação contendo usuário responsável, unidade, produto, tipo de operação, quantidade e data/hora.
+
+O usuário responsável é obtido a partir do JWT autenticado, evitando que o cliente da API informe manualmente o identificador do responsável pela ação.

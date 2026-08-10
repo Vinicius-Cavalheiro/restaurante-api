@@ -249,3 +249,187 @@ Tipo: Negativo
 Resultado esperado: 404 Not Found
 
 Status: aprovado
+
+## T13 - Entrada de estoque
+
+**Método:** `POST`
+
+**Rota:** `/estoques/entrada`
+
+**Tipo:** Positivo
+
+**Resultado esperado:** `200 OK`
+
+**Descrição:**  
+Verificar se um usuário ADMIN consegue adicionar quantidade ao estoque de um produto em uma unidade.
+
+**Entrada utilizada:**
+
+```json
+{
+  "unidadeId": 1,
+  "produtoId": 1,
+  "quantidade": 100
+}
+
+## T14 - Saída de estoque
+
+**Método:** `POST`
+
+**Rota:** `/estoques/saida`
+
+**Tipo:** Positivo
+
+**Resultado esperado:** `200 OK`
+
+**Descrição:**  
+Verificar se um usuário ADMIN consegue realizar a saída de um produto do estoque de uma unidade.
+
+**Resultado obtido:** `200 OK`
+
+**Status:** APROVADO
+
+## T16 - Consultar histórico de movimentações
+
+**Método:** `GET`
+
+**Rota:** `/estoques/movimentacoes`
+
+**Tipo:** Positivo
+
+**Resultado esperado:** `200 OK`
+
+**Descrição:**  
+Verificar se um usuário ADMIN consegue consultar o histórico das movimentações de estoque.
+
+O histórico deve informar o tipo da movimentação, quantidade, unidade, produto, usuário responsável e data da operação.
+
+**Resultado obtido:** `200 OK`
+
+**Status:** APROVADO
+
+---
+
+## T17 - Consultar movimentações por unidade
+
+**Método:** `GET`
+
+**Rota:** `/estoques/movimentacoes?unidadeId=1`
+
+**Tipo:** Positivo
+
+**Resultado esperado:** `200 OK`
+
+**Descrição:**  
+Verificar se o histórico de movimentações pode ser filtrado por unidade.
+
+**Resultado obtido:** `200 OK`
+
+**Status:** APROVADO
+
+## T18 - Criar pedido com sucesso
+
+**Método:** `POST`
+
+**Rota:** `/pedidos`
+
+**Tipo:** Positivo
+
+**Resultado esperado:** `201 Created`
+
+**Descrição:**  
+Verificar se um usuário autenticado consegue criar um pedido com unidade, canal e itens válidos.
+
+O sistema deve calcular automaticamente o preço unitário, subtotal e valor total com base nos valores cadastrados no banco.
+
+**Resultado obtido:** `201 Created`
+
+**Status:** APROVADO
+
+## T19 - Bloquear pedido com estoque insuficiente
+
+**Método:** `POST`
+
+**Rota:** `/pedidos`
+
+**Tipo:** Negativo
+
+**Resultado esperado:** `409 Conflict`
+
+**Descrição:**  
+Verificar se o sistema impede a criação de um pedido quando a quantidade solicitada é maior que o estoque disponível na unidade.
+
+**Resultado obtido:** `409 Conflict`
+
+**Status:** APROVADO
+
+---
+
+## T20 - Criar pedido com estoque disponível
+
+**Método:** `POST`
+
+**Rota:** `/pedidos`
+
+**Tipo:** Positivo
+
+**Resultado esperado:** `201 Created`
+
+**Descrição:**  
+Verificar se o sistema permite a criação de um pedido quando todos os produtos possuem estoque suficiente na unidade selecionada.
+
+O preço unitário, subtotal e valor total são calculados pelo backend com base nos preços cadastrados.
+
+**Resultado obtido:** `201 Created`
+
+**Status:** APROVADO
+
+## T21 - Pagamento recusado
+
+**Método:** `POST`  
+**Rota:** `/pedidos/:id/pagamento`  
+**Tipo:** Negativo  
+**Resultado esperado:** `200 OK`
+
+**Descrição:**  
+Verificar o comportamento do sistema quando o pagamento mock é recusado.
+
+O pagamento deve ser registrado como RECUSADO, o pedido deve ser alterado para CANCELADO e o estoque não deve sofrer alteração.
+
+**Resultado obtido:** `200 OK`
+
+**Status:** APROVADO
+
+---
+
+## T22 - Pagamento aprovado
+
+**Método:** `POST`  
+**Rota:** `/pedidos/:id/pagamento`  
+**Tipo:** Positivo  
+**Resultado esperado:** `200 OK`
+
+**Descrição:**  
+Verificar se um pagamento mock aprovado confirma o pedido.
+
+O pagamento deve ser registrado como APROVADO, o pedido alterado para CONFIRMADO, o estoque reduzido conforme os itens e uma movimentação do tipo SAIDA deve ser registrada.
+
+**Resultado obtido:** `200 OK`
+
+**Status:** APROVADO
+
+---
+
+## T23 - Impedir pagamento duplicado
+
+**Método:** `POST`  
+**Rota:** `/pedidos/:id/pagamento`  
+**Tipo:** Negativo  
+**Resultado esperado:** `409 Conflict`
+
+**Descrição:**  
+Verificar se o sistema impede o processamento de um segundo pagamento para um pedido que já possui pagamento registrado.
+
+**Resultado obtido:** `409 Conflict`
+
+**Status:** APROVADO
