@@ -6,7 +6,7 @@ import { authRoutes } from "./routes/auth.routes.js";
 import { unidadeRoutes } from "./routes/unidade.routes.js";
 import { produtoRoutes } from "./routes/produto.routes.js";
 import { estoqueRoutes } from "./routes/estoque.routes.js";
-
+import { pedidoRoutes } from "./routes/pedido.routes.js";
 const app = express();
 
 app.use(cors());
@@ -22,7 +22,7 @@ app.use("/auth", authRoutes);
 app.use("/unidades", unidadeRoutes);
 app.use("/produtos", produtoRoutes);
 app.use("/estoques", estoqueRoutes);
-
+app.use("/pedidos", pedidoRoutes);
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
