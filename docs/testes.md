@@ -433,3 +433,81 @@ Verificar se o sistema impede o processamento de um segundo pagamento para um pe
 **Resultado obtido:** `409 Conflict`
 
 **Status:** APROVADO
+
+
+## T24 - Avançar status do pedido
+
+**Método:** `PATCH`  
+**Rota:** `/pedidos/:id/status`  
+**Tipo:** Positivo  
+**Resultado esperado:** `200 OK`
+
+**Descrição:**  
+Verificar se usuários autorizados conseguem avançar o pedido seguindo o fluxo permitido.
+
+Fluxo validado:
+
+CONFIRMADO → EM_PREPARO → PRONTO → FINALIZADO
+
+**Resultado obtido:** `200 OK`
+
+**Status:** APROVADO
+
+---
+
+## T25 - Bloquear transição inválida de status
+
+**Método:** `PATCH`  
+**Rota:** `/pedidos/:id/status`  
+**Tipo:** Negativo  
+**Resultado esperado:** `409 Conflict`
+
+**Descrição:**  
+Verificar se o sistema impede que um pedido pule etapas do fluxo operacional.
+
+Exemplo testado:
+
+CONFIRMADO → FINALIZADO
+
+**Resultado obtido:** `409 Conflict`
+
+**Status:** APROVADO
+
+## T26 - Consulta de auditoria por administrador
+
+**Método:** `GET`  
+**Rota:** `/auditorias`  
+**Perfil:** ADMIN  
+**Tipo:** Positivo  
+**Resultado esperado:** `200 OK`
+
+**Descrição:**  
+Verificar se um administrador autenticado consegue consultar os registros de auditoria do sistema.
+
+Foram validados registros referentes a:
+- criação de pedido;
+- aprovação de pagamento;
+- alteração de status do pedido.
+
+Os registros apresentam usuário responsável, ação realizada, entidade afetada, identificador da entidade, detalhes e data/hora.
+
+**Resultado obtido:** `200 OK`
+
+**Status:** APROVADO
+
+---
+
+## T27 - Bloqueio de consulta de auditoria por cliente
+
+**Método:** `GET`  
+**Rota:** `/auditorias`  
+**Perfil:** CLIENTE  
+**Tipo:** Negativo  
+**Resultado esperado:** `403 Forbidden`
+
+**Descrição:**  
+Verificar se um usuário com perfil CLIENTE é impedido de consultar os registros de auditoria.
+
+**Resultado obtido:** `403 Forbidden`
+
+**Status:** APROVADO

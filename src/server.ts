@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-
+import { auditoriaRoutes } from "./routes/auditoria.routes.js";
 import { authRoutes } from "./routes/auth.routes.js";
 import { unidadeRoutes } from "./routes/unidade.routes.js";
 import { produtoRoutes } from "./routes/produto.routes.js";
@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
     message: "API do sistema de restaurante funcionando!",
   });
 });
-
+app.use("/auditorias", auditoriaRoutes);
 app.use("/auth", authRoutes);
 app.use("/unidades", unidadeRoutes);
 app.use("/produtos", produtoRoutes);
