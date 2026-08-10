@@ -1,513 +1,1024 @@
-# Plano e Evidências de Testes da API
+# Testes da API — Raízes do Nordeste
 
 ## 1. Objetivo
 
-Este documento registra os testes funcionais realizados na API do sistema de restaurante.
+Os testes tiveram como objetivo validar o funcionamento dos principais endpoints da API, incluindo cenários positivos e negativos.
 
-Os testes são executados utilizando o Insomnia e contemplam cenários positivos e negativos, incluindo autenticação, autorização, validações e regras de negócio.
+Foram avaliados:
 
----
+- autenticação;
+- autorização por perfil;
+- unidades;
+- produtos;
+- estoque;
+- pedidos;
+- multicanalidade;
+- pagamentos;
+- fluxo de status;
+- fidelidade;
+- auditoria;
+- tratamento de erros.
 
-## 2. Ambiente de Testes
-
-- API: Node.js + Express + TypeScript
-- Banco de dados: MySQL
-- ORM: Prisma
-- Cliente HTTP: Insomnia
-- Autenticação: JWT
-- URL base local: `http://localhost:3000`
-
----
-
-## 3. Resumo dos Testes
-
-| ID | Cenário | Tipo | Resultado esperado |
-|---|---|---|---|
-| T01 | Cadastro de usuário válido | Positivo | 201 Created |
-| T02 | Login válido | Positivo | 200 OK |
-| T03 | Acesso sem token | Negativo | 401 Unauthorized |
-| T04 | Acesso com perfil sem permissão | Negativo | 403 Forbidden |
-| T05 | Cadastro de unidade por ADMIN | Positivo | 201 Created |
-| T06 | Atualização de unidade | Positivo | 200 OK |
-| T07 | Cadastro de produto por ADMIN | Positivo | 201 Created |
-| T08 | Cadastro de produto com SKU duplicado | Negativo | 409 Conflict |
-| T09 | Consulta da lista de produtos | Positivo | 200 OK |
-| T10 | Consulta de produto por ID | Positivo | 200 OK |
-| T11 | Atualização de produto | Positivo | 200 OK |
-| T12 | Consulta de produto inexistente | Negativo | 404 Not Found |
+Os testes manuais foram realizados principalmente utilizando Insomnia e Swagger/OpenAPI.
 
 ---
 
-# 4. Autenticação e Usuários
+# 2. Estratégia de Testes
 
-## T01 - Cadastro de usuário válido
+Foram utilizados testes funcionais de API através de requisições HTTP.
 
-**Método:** `POST`
+Para cada funcionalidade foram avaliados:
 
-**Rota:** `/auth/register`
+- método HTTP;
+- endpoint;
+- autenticação;
+- autorização;
+- dados enviados;
+- código HTTP retornado;
+- corpo da resposta;
+- aplicação das regras de negócio.
 
-**Tipo:** Positivo
-
-**Resultado esperado:** `201 Created`
-
-**Descrição:**  
-Verificar se um novo usuário pode ser cadastrado corretamente quando os dados obrigatórios são informados.
-
-**Resultado obtido:** `201 Created`
-
-**Status:** APROVADO
+Foram utilizados tanto cenários de sucesso quanto cenários de erro.
 
 ---
 
-## T02 - Login válido
+# 3. Códigos HTTP validados
 
-**Método:** `POST`
+Durante os testes foram observados os seguintes códigos HTTP:
 
-**Rota:** `/auth/login`
-
-**Tipo:** Positivo
-
-**Resultado esperado:** `200 OK`
-
-**Descrição:**  
-Verificar se um usuário com credenciais válidas consegue realizar login e receber um token JWT.
-
-**Resultado obtido:** `200 OK`
-
-**Status:** APROVADO
+| Código | Utilização |
+|---|---|
+| 200 | Operação realizada com sucesso |
+| 201 | Recurso criado com sucesso |
+| 400 | Requisição ou parâmetro inválido |
+| 401 | Falha de autenticação |
+| 403 | Usuário autenticado sem autorização |
+| 404 | Recurso não encontrado |
+| 409 | Conflito com regra de negócio |
+| 422 | Dados semanticamente inválidos |
+| 500 | Erro interno tratado pela API |
 
 ---
 
-## T03 - Acesso a recurso protegido sem token
+# 4. Autenticação
 
-**Tipo:** Negativo
+## T01 — Login válido
 
-**Resultado esperado:** `401 Unauthorized`
+**Endpoint**
 
-**Descrição:**  
-Verificar se a API impede o acesso a recursos protegidos quando o token JWT não é informado.
+```http
+POST /auth/login
+```
 
-**Resposta esperada:**
+**Objetivo**
 
-```json
-{
-  "error": "TOKEN_NAO_INFORMADO",
-  "message": "Token de autorização não informado."
-}
-Resultado obtido: 401 Unauthorized
+Validar a autenticação de um usuário cadastrado.
 
-Status: APROVADO
+**Resultado esperado**
 
-T04 - Usuário sem permissão acessando recurso administrativo
+```text
+200 OK
+```
 
-Tipo: Negativo
+A API deve retornar um token JWT.
 
-Resultado esperado: 403 Forbidden
+**Resultado obtido**
 
-Descrição:
-Verificar se um usuário autenticado com perfil sem permissão é impedido de acessar um recurso exclusivo de perfis administrativos.
+```text
+APROVADO
+```
+
+---
+
+## T02 — Token inválido
+
+**Objetivo**
+
+Tentar acessar um endpoint protegido utilizando token JWT inválido.
+
+**Resultado esperado**
+
+```text
+401 Unauthorized
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+O endpoint protegido rejeitou a requisição.
+
+---
+
+# 5. Autorização por perfil
+
+## T03 — CLIENTE tentando acessar recurso administrativo
+
+**Endpoint utilizado**
+
+```http
+GET /auditorias
+```
+
+**Perfil**
+
+```text
+CLIENTE
+```
+
+**Resultado esperado**
+
+```text
+403 Forbidden
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+Esse teste demonstra que autenticação e autorização são tratadas separadamente.
+
+O usuário possui um JWT válido, porém seu perfil não possui autorização para acessar a auditoria.
+
+---
+
+## T04 — ADMIN acessando auditoria
+
+**Endpoint**
+
+```http
+GET /auditorias
+```
+
+**Perfil**
+
+```text
+ADMIN
+```
+
+**Resultado esperado**
+
+```text
+200 OK
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+---
+
+# 6. Produtos
+
+## T05 — Listagem de produtos
+
+```http
+GET /produtos
+```
+
+**Resultado esperado**
+
+```text
+200 OK
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+---
+
+## T06 — Cadastro de produto
+
+```http
+POST /produtos
+```
+
+**Perfil**
+
+```text
+ADMIN
+```
+
+**Resultado esperado**
+
+```text
+201 Created
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+---
+
+## T07 — SKU duplicado
+
+**Objetivo**
+
+Tentar cadastrar um produto utilizando um SKU já existente.
+
+**Resultado esperado**
+
+```text
+409 Conflict
+```
+
+Erro esperado:
+
+```text
+SKU_JA_CADASTRADO
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+O sistema impediu a duplicidade do SKU.
+
+---
+
+# 7. Estoque
+
+## T08 — Consulta de estoque por unidade
+
+```http
+GET /estoques/unidade/:unidadeId
+```
+
+**Resultado esperado**
+
+```text
+200 OK
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+---
+
+## T09 — Entrada de estoque
+
+```http
+POST /estoques/entrada
+```
+
+**Perfil**
+
+```text
+ADMIN
+```
+
+**Resultado esperado**
+
+```text
+200 OK
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+O saldo do estoque foi aumentado.
+
+A operação também gerou uma movimentação do tipo:
+
+```text
+ENTRADA
+```
+
+---
+
+## T10 — Saída de estoque
+
+```http
+POST /estoques/saida
+```
+
+**Perfil**
+
+```text
+ADMIN
+```
+
+**Resultado esperado**
+
+```text
+200 OK
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+A quantidade foi removida do estoque e uma movimentação do tipo `SAIDA` foi registrada.
+
+---
+
+## T11 — Estoque insuficiente
+
+**Objetivo**
+
+Tentar retirar uma quantidade superior ao saldo disponível.
+
+**Resultado esperado**
+
+```text
+409 Conflict
+```
 
 Resposta esperada:
 
+```json
 {
-  "error": "ACESSO_NEGADO",
-  "message": "Você não possui permissão para acessar este recurso."
+  "error": "ESTOQUE_INSUFICIENTE",
+  "message": "Não há estoque suficiente para realizar esta saída."
 }
+```
 
-Resultado obtido: 403 Forbidden
+**Resultado obtido**
 
-Status: APROVADO
+```text
+APROVADO
+```
 
-5. Unidades
-T05 - Cadastro de unidade por ADMIN
+O estoque negativo foi impedido.
 
-Método: POST
+---
 
-Rota: /unidades
+## T12 — Quantidade inválida
 
-Tipo: Positivo
+**Objetivo**
 
-Resultado esperado: 201 Created
+Enviar quantidade igual ou inferior a zero.
 
-Descrição:
-Verificar se um usuário ADMIN consegue cadastrar uma nova unidade.
+**Resultado esperado**
 
-Exemplo de entrada:
+```text
+422 Unprocessable Entity
+```
 
-{
-  "nome": "Restaurante Centro",
-  "endereco": "Rua Principal, 100",
-  "cidade": "Curitiba"
-}
+Erro:
 
-Resultado obtido: 201 Created
+```text
+QUANTIDADE_INVALIDA
+```
 
-Status: APROVADO
+**Resultado obtido**
 
-T06 - Atualização de unidade
+```text
+APROVADO
+```
 
-Método: PUT
+---
 
-Rota: /unidades/:id
+# 8. Pedidos
 
-Tipo: Positivo
+## T13 — Criação de pedido
 
-Resultado esperado: 200 OK
+```http
+POST /pedidos
+```
 
-Descrição:
-Verificar se os dados de uma unidade existente podem ser atualizados corretamente.
-
-Resultado obtido: 200 OK
-
-Status: APROVADO
-
-6. Produtos
-T07 - Cadastro de produto por ADMIN
-
-Método: POST
-
-Rota: /produtos
-
-Tipo: Positivo
-
-Resultado esperado: 201 Created
-
-Entrada utilizada:
-
-{
-  "nome": "X-Burger",
-  "descricao": "Hambúrguer, queijo e molho da casa",
-  "categoria": "Lanches",
-  "sku": "LAN-XBURGER-001",
-  "preco": 29.90,
-  "custo": 12.50
-}
-
-Resultado obtido: 201 Created
-
-Status: APROVADO
-
-T08 - Cadastro de produto com SKU duplicado
-
-Método: POST
-
-Rota: /produtos
-
-Tipo: Negativo
-
-Resultado esperado: 409 Conflict
-
-Descrição:
-Verificar se o sistema impede o cadastro de dois produtos utilizando o mesmo SKU.
-
-Status: APROVADO
-
-T09 - Listar produtos
-
-Método: GET
-
-Rota: /produtos
-
-Tipo: Positivo
-
-Resultado esperado: 200 OK
-
-Status: APROVADO
-
-T10 - Buscar produto por ID
-
-Método: GET
-
-Rota: /produtos/1
-
-Tipo: Positivo
-
-Resultado esperado: 200 OK
-
-Status: Aprovado
-
-T11 - Atualizar produto
-
-Método: PUT
-
-Rota: /produtos/1
-
-Tipo: Positivo
-
-Resultado esperado: 200 OK
-
-Status: APROVADO
-
-T12 - Consultar produto inexistente
-
-Método: GET
-
-Rota: /produtos/99999
-
-Tipo: Negativo
-
-Resultado esperado: 404 Not Found
-
-Status: aprovado
-
-## T13 - Entrada de estoque
-
-**Método:** `POST`
-
-**Rota:** `/estoques/entrada`
-
-**Tipo:** Positivo
-
-**Resultado esperado:** `200 OK`
-
-**Descrição:**  
-Verificar se um usuário ADMIN consegue adicionar quantidade ao estoque de um produto em uma unidade.
-
-**Entrada utilizada:**
+Exemplo:
 
 ```json
 {
   "unidadeId": 1,
-  "produtoId": 1,
-  "quantidade": 100
+  "canalPedido": "APP",
+  "itens": [
+    {
+      "produtoId": 1,
+      "quantidade": 1
+    }
+  ]
 }
+```
 
-## T14 - Saída de estoque
+**Resultado esperado**
 
-**Método:** `POST`
+```text
+201 Created
+```
 
-**Rota:** `/estoques/saida`
+O pedido deve ser criado inicialmente como:
 
-**Tipo:** Positivo
+```text
+PENDENTE
+```
 
-**Resultado esperado:** `200 OK`
+**Resultado obtido**
 
-**Descrição:**  
-Verificar se um usuário ADMIN consegue realizar a saída de um produto do estoque de uma unidade.
-
-**Resultado obtido:** `200 OK`
-
-**Status:** APROVADO
-
-## T16 - Consultar histórico de movimentações
-
-**Método:** `GET`
-
-**Rota:** `/estoques/movimentacoes`
-
-**Tipo:** Positivo
-
-**Resultado esperado:** `200 OK`
-
-**Descrição:**  
-Verificar se um usuário ADMIN consegue consultar o histórico das movimentações de estoque.
-
-O histórico deve informar o tipo da movimentação, quantidade, unidade, produto, usuário responsável e data da operação.
-
-**Resultado obtido:** `200 OK`
-
-**Status:** APROVADO
+```text
+APROVADO
+```
 
 ---
 
-## T17 - Consultar movimentações por unidade
+## T14 — Pedido sem itens
 
-**Método:** `GET`
+**Resultado esperado**
 
-**Rota:** `/estoques/movimentacoes?unidadeId=1`
+```text
+422 Unprocessable Entity
+```
 
-**Tipo:** Positivo
+Erro:
 
-**Resultado esperado:** `200 OK`
+```text
+PEDIDO_SEM_ITENS
+```
 
-**Descrição:**  
-Verificar se o histórico de movimentações pode ser filtrado por unidade.
+**Resultado obtido**
 
-**Resultado obtido:** `200 OK`
-
-**Status:** APROVADO
-
-## T18 - Criar pedido com sucesso
-
-**Método:** `POST`
-
-**Rota:** `/pedidos`
-
-**Tipo:** Positivo
-
-**Resultado esperado:** `201 Created`
-
-**Descrição:**  
-Verificar se um usuário autenticado consegue criar um pedido com unidade, canal e itens válidos.
-
-O sistema deve calcular automaticamente o preço unitário, subtotal e valor total com base nos valores cadastrados no banco.
-
-**Resultado obtido:** `201 Created`
-
-**Status:** APROVADO
-
-## T19 - Bloquear pedido com estoque insuficiente
-
-**Método:** `POST`
-
-**Rota:** `/pedidos`
-
-**Tipo:** Negativo
-
-**Resultado esperado:** `409 Conflict`
-
-**Descrição:**  
-Verificar se o sistema impede a criação de um pedido quando a quantidade solicitada é maior que o estoque disponível na unidade.
-
-**Resultado obtido:** `409 Conflict`
-
-**Status:** APROVADO
+```text
+APROVADO
+```
 
 ---
 
-## T20 - Criar pedido com estoque disponível
+## T15 — Produto inexistente
 
-**Método:** `POST`
+**Objetivo**
 
-**Rota:** `/pedidos`
+Criar pedido utilizando produto inexistente ou inválido.
 
-**Tipo:** Positivo
+**Resultado esperado**
 
-**Resultado esperado:** `201 Created`
+```text
+404 Not Found
+```
 
-**Descrição:**  
-Verificar se o sistema permite a criação de um pedido quando todos os produtos possuem estoque suficiente na unidade selecionada.
+Erro:
 
-O preço unitário, subtotal e valor total são calculados pelo backend com base nos preços cadastrados.
+```text
+PRODUTO_INVALIDO
+```
 
-**Resultado obtido:** `201 Created`
+**Resultado obtido**
 
-**Status:** APROVADO
-
-## T21 - Pagamento recusado
-
-**Método:** `POST`  
-**Rota:** `/pedidos/:id/pagamento`  
-**Tipo:** Negativo  
-**Resultado esperado:** `200 OK`
-
-**Descrição:**  
-Verificar o comportamento do sistema quando o pagamento mock é recusado.
-
-O pagamento deve ser registrado como RECUSADO, o pedido deve ser alterado para CANCELADO e o estoque não deve sofrer alteração.
-
-**Resultado obtido:** `200 OK`
-
-**Status:** APROVADO
+```text
+APROVADO
+```
 
 ---
 
-## T22 - Pagamento aprovado
+## T16 — Canal de pedido inválido
 
-**Método:** `POST`  
-**Rota:** `/pedidos/:id/pagamento`  
-**Tipo:** Positivo  
-**Resultado esperado:** `200 OK`
+Exemplo inválido:
 
-**Descrição:**  
-Verificar se um pagamento mock aprovado confirma o pedido.
+```json
+{
+  "canalPedido": "WHATSAPP"
+}
+```
 
-O pagamento deve ser registrado como APROVADO, o pedido alterado para CONFIRMADO, o estoque reduzido conforme os itens e uma movimentação do tipo SAIDA deve ser registrada.
+Os canais permitidos são:
 
-**Resultado obtido:** `200 OK`
+```text
+BALCAO
+APP
+DELIVERY
+```
 
-**Status:** APROVADO
+**Resultado esperado**
+
+```text
+422 Unprocessable Entity
+```
+
+na criação do pedido.
+
+Na validação do filtro `GET /pedidos?canalPedido=...`, parâmetros inválidos podem retornar:
+
+```text
+400 Bad Request
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
 
 ---
 
-## T23 - Impedir pagamento duplicado
+# 9. Multicanalidade
 
-**Método:** `POST`  
-**Rota:** `/pedidos/:id/pagamento`  
-**Tipo:** Negativo  
-**Resultado esperado:** `409 Conflict`
+## T17 — Pedido pelo canal APP
 
-**Descrição:**  
-Verificar se o sistema impede o processamento de um segundo pagamento para um pedido que já possui pagamento registrado.
+```json
+{
+  "canalPedido": "APP"
+}
+```
 
-**Resultado obtido:** `409 Conflict`
+**Resultado**
 
-**Status:** APROVADO
+```text
+APROVADO
+```
 
+---
 
-## T24 - Avançar status do pedido
+## T18 — Pedido pelo canal BALCAO
 
-**Método:** `PATCH`  
-**Rota:** `/pedidos/:id/status`  
-**Tipo:** Positivo  
-**Resultado esperado:** `200 OK`
+```json
+{
+  "canalPedido": "BALCAO"
+}
+```
 
-**Descrição:**  
-Verificar se usuários autorizados conseguem avançar o pedido seguindo o fluxo permitido.
+**Resultado**
+
+```text
+APROVADO
+```
+
+---
+
+## T19 — Pedido pelo canal DELIVERY
+
+```json
+{
+  "canalPedido": "DELIVERY"
+}
+```
+
+**Resultado**
+
+```text
+APROVADO
+```
+
+---
+
+## T20 — Filtro por canal
+
+```http
+GET /pedidos?canalPedido=APP
+```
+
+**Resultado esperado**
+
+A API deve retornar os pedidos correspondentes ao canal solicitado.
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+Esse teste comprova que o canal é persistido e pode ser utilizado como critério de consulta.
+
+---
+
+# 10. Pagamento
+
+## T21 — Pagamento aprovado
+
+```http
+POST /pedidos/:id/pagamento
+```
+
+**Resultado esperado**
+
+```text
+200 OK
+```
+
+Fluxo:
+
+```text
+PENDENTE
+   ↓
+Pagamento APROVADO
+   ↓
+CONFIRMADO
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+---
+
+## T22 — Pagamento recusado
+
+```http
+POST /pedidos/:id/pagamento
+```
+
+**Resultado esperado**
+
+O pagamento deve ser registrado como:
+
+```text
+RECUSADO
+```
+
+e o pedido deve seguir a regra de cancelamento implementada.
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
 
 Fluxo validado:
 
-CONFIRMADO → EM_PREPARO → PRONTO → FINALIZADO
-
-**Resultado obtido:** `200 OK`
-
-**Status:** APROVADO
+```text
+PENDENTE
+   ↓
+Pagamento RECUSADO
+   ↓
+CANCELADO
+```
 
 ---
 
-## T25 - Bloquear transição inválida de status
+## T23 — Pagamento duplicado
 
-**Método:** `PATCH`  
-**Rota:** `/pedidos/:id/status`  
-**Tipo:** Negativo  
-**Resultado esperado:** `409 Conflict`
+**Objetivo**
 
-**Descrição:**  
-Verificar se o sistema impede que um pedido pule etapas do fluxo operacional.
+Tentar processar novamente o pagamento de um pedido que já possui pagamento registrado.
 
-Exemplo testado:
+**Resultado esperado**
 
+```text
+409 Conflict
+```
+
+Erro:
+
+```text
+PAGAMENTO_JA_PROCESSADO
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+---
+
+# 11. Status do pedido
+
+## T24 — Alterar para EM_PREPARO
+
+```http
+PATCH /pedidos/:id/status
+```
+
+```json
+{
+  "status": "EM_PREPARO"
+}
+```
+
+**Resultado esperado**
+
+```text
+200 OK
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+---
+
+## T25 — Alterar para PRONTO
+
+```json
+{
+  "status": "PRONTO"
+}
+```
+
+**Resultado esperado**
+
+```text
+200 OK
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+---
+
+## T26 — Finalizar pedido
+
+```json
+{
+  "status": "FINALIZADO"
+}
+```
+
+**Resultado esperado**
+
+```text
+200 OK
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+Fluxo completo validado:
+
+```text
+CONFIRMADO
+     ↓
+EM_PREPARO
+     ↓
+PRONTO
+     ↓
+FINALIZADO
+```
+
+---
+
+## T27 — Transição inválida
+
+**Objetivo**
+
+Tentar pular uma etapa obrigatória do fluxo.
+
+Exemplo:
+
+```text
 CONFIRMADO → FINALIZADO
+```
 
-**Resultado obtido:** `409 Conflict`
+**Resultado esperado**
 
-**Status:** APROVADO
+```text
+409 Conflict
+```
 
-## T26 - Consulta de auditoria por administrador
+Erro:
 
-**Método:** `GET`  
-**Rota:** `/auditorias`  
-**Perfil:** ADMIN  
-**Tipo:** Positivo  
-**Resultado esperado:** `200 OK`
+```text
+TRANSICAO_STATUS_INVALIDA
+```
 
-**Descrição:**  
-Verificar se um administrador autenticado consegue consultar os registros de auditoria do sistema.
+**Resultado obtido**
 
-Foram validados registros referentes a:
-- criação de pedido;
-- aprovação de pagamento;
-- alteração de status do pedido.
-
-Os registros apresentam usuário responsável, ação realizada, entidade afetada, identificador da entidade, detalhes e data/hora.
-
-**Resultado obtido:** `200 OK`
-
-**Status:** APROVADO
+```text
+APROVADO
+```
 
 ---
 
-## T27 - Bloqueio de consulta de auditoria por cliente
+# 12. Fidelidade
 
-**Método:** `GET`  
-**Rota:** `/auditorias`  
-**Perfil:** CLIENTE  
-**Tipo:** Negativo  
-**Resultado esperado:** `403 Forbidden`
+## T28 — Consulta de saldo
 
-**Descrição:**  
-Verificar se um usuário com perfil CLIENTE é impedido de consultar os registros de auditoria.
+```http
+GET /fidelidade/saldo
+```
 
-**Resultado obtido:** `403 Forbidden`
+**Resultado esperado**
 
-**Status:** APROVADO
+```text
+200 OK
+```
+
+Exemplo:
+
+```json
+{
+  "fidelidade": {
+    "usuarioId": 1,
+    "nome": "Usuário",
+    "pontos": 32
+  }
+}
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+---
+
+## T29 — Crédito de pontos após finalização
+
+**Objetivo**
+
+Validar que a finalização do pedido gera pontos de fidelidade.
+
+Regra utilizada:
+
+```text
+R$ 1,00 gasto = 1 ponto
+```
+
+A parte decimal do valor é desconsiderada.
+
+Exemplo:
+
+```text
+R$ 32,90 → 32 pontos
+```
+
+**Resultado obtido**
+
+```text
+APROVADO
+```
+
+O campo:
+
+```text
+pontosCreditados
+```
+
+também impede o crédito repetido dos pontos do mesmo pedido.
+
+---
+
+# 13. Auditoria
+
+## T30 — Registro de criação de pedido
+
+Evento:
+
+```text
+PEDIDO_CRIADO
+```
+
+**Resultado**
+
+```text
+APROVADO
+```
+
+---
+
+## T31 — Registro de pagamento
+
+Eventos possíveis:
+
+```text
+PAGAMENTO_APROVADO
+PAGAMENTO_RECUSADO
+```
+
+**Resultado**
+
+```text
+APROVADO
+```
+
+---
+
+## T32 — Registro de alteração de status
+
+Evento:
+
+```text
+STATUS_PEDIDO_ALTERADO
+```
+
+**Resultado**
+
+```text
+APROVADO
+```
+
+---
+
+## T33 — Auditoria de fidelidade
+
+Evento:
+
+```text
+PONTOS_FIDELIDADE_CREDITADOS
+```
+
+**Resultado**
+
+```text
+APROVADO
+```
+
+---
+
+# 14. Fluxo crítico validado
+
+O fluxo crítico da aplicação foi testado de ponta a ponta:
+
+```text
+Usuário autenticado
+        ↓
+Criação do pedido
+        ↓
+Validação da unidade
+        ↓
+Validação dos produtos
+        ↓
+Validação do estoque
+        ↓
+Cálculo do pedido
+        ↓
+Pedido PENDENTE
+        ↓
+Pagamento
+       / \
+      /   \
+APROVADO  RECUSADO
+   ↓          ↓
+CONFIRMADO  CANCELADO
+   ↓
+Baixa do estoque
+   ↓
+EM_PREPARO
+   ↓
+PRONTO
+   ↓
+FINALIZADO
+   ↓
+Crédito de fidelidade
+   ↓
+Auditoria
+```
+
+---
+
+# 15. Evidências
+
+As evidências dos testes foram registradas através de capturas de tela das requisições realizadas no Insomnia e Swagger.
+
+Sugestão de organização:
+
+```text
+docs/
+└── evidencias/
+    ├── autenticacao/
+    ├── autorizacao/
+    ├── produtos/
+    ├── estoque/
+    ├── pedidos/
+    ├── pagamentos/
+    ├── fidelidade/
+    └── auditoria/
+```
+
+Os arquivos podem utilizar uma nomenclatura padronizada, por exemplo:
+
+```text
+01-login-sucesso.png
+02-token-invalido-401.png
+03-acesso-negado-403.png
+04-produto-sku-duplicado-409.png
+05-estoque-insuficiente-409.png
+06-pedido-criado-201.png
+07-pagamento-aprovado.png
+08-pagamento-recusado.png
+09-transicao-invalida-409.png
+10-fidelidade.png
+11-auditoria.png
+```
+
+---
+
+# 16. Conclusão
+
+Os testes demonstram o funcionamento das principais regras de negócio da API Raízes do Nordeste.
+
+Além dos cenários de sucesso, foram validados cenários de erro relacionados a autenticação, autorização, validação de dados, recursos inexistentes, conflitos de negócio, estoque insuficiente, pagamento e transições inválidas.
+
+O fluxo crítico de pedido foi validado desde sua criação até pagamento, movimentação de estoque, atualização de status, fidelização e auditoria.

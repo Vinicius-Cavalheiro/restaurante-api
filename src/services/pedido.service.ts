@@ -1,6 +1,7 @@
 import { prisma } from "../config/prisma.js";
 import { registrarAuditoria } from "./auditoria.service.js";
 import { creditarPontosPedido } from "./fidelidade.service.js";
+
 interface ItemPedidoDTO {
   produtoId: number;
   quantidade: number;
@@ -13,7 +14,9 @@ interface CriarPedidoDTO {
   itens: ItemPedidoDTO[];
 }
 
-export async function criarPedido(dados: CriarPedidoDTO) {
+export async function criarPedido(
+  dados: CriarPedidoDTO
+) {
   const {
     usuarioId,
     unidadeId,
@@ -53,24 +56,26 @@ export async function criarPedido(dados: CriarPedidoDTO) {
       throw new Error("QUANTIDADE_INVALIDA");
     }
 
-    const produto = await prisma.produto.findUnique({
-      where: {
-        id: item.produtoId,
-      },
-    });
+    const produto =
+      await prisma.produto.findUnique({
+        where: {
+          id: item.produtoId,
+        },
+      });
 
     if (!produto || !produto.ativo) {
       throw new Error("PRODUTO_INVALIDO");
     }
 
-    const estoque = await prisma.estoque.findUnique({
-      where: {
-        unidadeId_produtoId: {
-          unidadeId,
-          produtoId: item.produtoId,
+    const estoque =
+      await prisma.estoque.findUnique({
+        where: {
+          unidadeId_produtoId: {
+            unidadeId,
+            produtoId: item.produtoId,
+          },
         },
-      },
-    });
+      });
 
     if (
       !estoque ||
@@ -79,7 +84,8 @@ export async function criarPedido(dados: CriarPedidoDTO) {
       throw new Error("ESTOQUE_INSUFICIENTE");
     }
 
-    const precoUnitario = Number(produto.preco);
+    const precoUnitario =
+      Number(produto.preco);
 
     const subtotal =
       precoUnitario * item.quantidade;
@@ -137,7 +143,9 @@ export async function criarPedido(dados: CriarPedidoDTO) {
     detalhes: {
       unidadeId: pedido.unidadeId,
       canalPedido: pedido.canalPedido,
-      valorTotal: Number(pedido.valorTotal),
+      valorTotal: Number(
+        pedido.valorTotal
+      ),
     },
   });
 
@@ -229,49 +237,41 @@ export async function atualizarStatusPedido(
     });
 
   // Auditoria da mudança de status
- await registrarAuditoria({
-  usuarioId,
-  acao: "STATUS_PEDIDO_ALTERADO",
-  entidade: "PEDIDO",
-  entidadeId: pedidoId,
+  await registrarAuditoria({
+    usuarioId,
+    acao: "STATUS_PEDIDO_ALTERADO",
+    entidade: "PEDIDO",
+    entidadeId: pedidoId,
 
-  detalhes: {
-    statusAnterior,
-    statusNovo: novoStatus,
-  },
-});
+    detalhes: {
+      statusAnterior,
+      statusNovo: novoStatus,
+    },
+  });
 
-// Fidelização:
-// os pontos são concedidos somente
-// quando o pedido chega a FINALIZADO.
-if (novoStatus === "FINALIZADO") {
-  const pontos = await creditarPontosPedido(
-    pedidoId
-  );
+  // Fidelização:
+  // os pontos são concedidos somente
+  // quando o pedido chega a FINALIZADO.
+  if (novoStatus === "FINALIZADO") {
+    const resultadoPontos =
+      await creditarPontosPedido(pedidoId);
 
-  if (pontos > 0) {
-    await registrarAuditoria({
-      usuarioId,
-      acao: "PONTOS_FIDELIDADE_CREDITADOS",
-      entidade: "PEDIDO",
-      entidadeId: pedidoId,
-
-      detalhes: {
-        pontos,
-        usuarioBeneficiadoId:
-          pedidoAtualizado.usuarioId,
-        valorPedido: Number(
-          pedidoAtualizado.valorTotal
-        ),
-      },
-    });
+    if (
+      resultadoPontos.pontosCreditados > 0
+    ) {
+      console.log(
+        `${resultadoPontos.pontosCreditados} pontos de fidelidade creditados para o pedido ${pedidoId}.`
+      );
+    } else if (resultadoPontos.mensagem) {
+      console.log(
+        resultadoPontos.mensagem
+      );
+    }
   }
-}
-
-
 
   return pedidoAtualizado;
 }
+
 type CanalPedidoFiltro =
   | "BALCAO"
   | "APP"

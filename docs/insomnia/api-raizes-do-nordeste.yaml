@@ -1,0 +1,84 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: API Raízes do Nordest
+meta:
+  id: wrk_d7cf4786ee534adca9128684186bda81
+  created: 1786298200486
+  modified: 1786353139998
+  description: ""
+collection:
+  - url: http://localhost:3000/unidades
+    name: New Request
+    meta:
+      id: req_a38de0d3090d4934a7c04b05d7651e79
+      created: 1786298365229
+      modified: 1786301543806
+      isPrivate: false
+      description: ""
+      sortKey: -1786298365229
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "nome": "Restaurante Centro",
+          "endereco": "Rua Principal, 100",
+          "cidade": "Curitiba"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: none
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/fidelidade/resgatar
+    name: New Request
+    meta:
+      id: req_b2098aed9fdc421db832cf1d32816a68
+      created: 1786301630585
+      modified: 1786356722279
+      isPrivate: false
+      description: ""
+      sortKey: -1786301630585
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"pontos": 100
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      disabled: false
+      token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwZXJmaWwiOiJDTElFTlRFIiwiaWF0IjoxNzg2MzU2NDE3LCJleHAiOjE3ODYzNjAwMTcsInN1YiI6IjEifQ.JL_ug1Wy8sLcPp0uMRyX6-JP8Sg4JdKYfFvVLXqiguM
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_535cccb002b6022cc66c469e6002942221e1c5b5
+    created: 1786298365310
+    modified: 1786298365310
+environments:
+  name: Base Environment
+  meta:
+    id: env_535cccb002b6022cc66c469e6002942221e1c5b5
+    created: 1786298365308
+    modified: 1786298365308
+    isPrivate: false

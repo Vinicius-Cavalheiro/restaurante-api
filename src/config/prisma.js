@@ -1,0 +1,20 @@
+import "dotenv/config";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaClient } from "../../generated/prisma/client.js";
+const adapter = new PrismaMariaDb({
+    host: "127.0.0.1",
+    port: 3306,
+    user: "root",
+    password: process.env.DB_PASSWORD,
+    database: "restaurante_db",
+    connectionLimit: 5,
+    connectTimeout: 5000,
+    acquireTimeout: 20000,
+    // Necessário em alguns ambientes MySQL locais
+    // utilizando autenticação caching_sha2_password.
+    allowPublicKeyRetrieval: true,
+});
+export const prisma = new PrismaClient({
+    adapter,
+});
+//# sourceMappingURL=prisma.js.map

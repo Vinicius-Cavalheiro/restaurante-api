@@ -2,157 +2,212 @@
 
 ## 1. Visão Geral
 
-A aplicação foi estruturada como uma API REST desenvolvida com Node.js, TypeScript, Express, Prisma ORM e MySQL.
+A aplicação foi estruturada como uma API REST para gerenciamento da rede de restaurantes **Raízes do Nordeste**, desenvolvida com Node.js, TypeScript, Express, Prisma ORM e MySQL.
 
-O projeto segue uma organização em camadas com separação de responsabilidades entre entrada HTTP, regras de negócio, persistência e controle de acesso.
+A solução utiliza uma organização em camadas, separando as responsabilidades relacionadas a:
 
-A arquitetura adotada busca manter o código organizado, facilitar a manutenção, reduzir o acoplamento entre módulos e permitir evolução gradual da aplicação.
+- entrada e saída HTTP;
+- autenticação e autorização;
+- regras de negócio;
+- persistência de dados;
+- controle de estoque;
+- pedidos;
+- pagamento mock;
+- fidelização;
+- auditoria;
+- documentação da API.
+
+Essa separação busca reduzir o acoplamento entre os módulos, melhorar a manutenção do código e facilitar a evolução do sistema.
 
 ---
 
 ## 2. Tecnologias Utilizadas
 
-### Node.js
-Utilizado como ambiente de execução do Back-End.
+### 2.1 Node.js
 
-### TypeScript
+Utilizado como ambiente de execução da aplicação Back-End.
+
+### 2.2 TypeScript
+
 Utilizado para tipagem estática, organização do código e redução de erros durante o desenvolvimento.
 
-### Express
-Utilizado para criação da API REST, definição de rotas e gerenciamento das requisições HTTP.
+### 2.3 Express
 
-### Prisma ORM
-Utilizado como camada de acesso ao banco de dados, definição dos modelos e versionamento da estrutura através de migrations.
+Utilizado para criação da API REST, gerenciamento das requisições HTTP e definição das rotas.
 
-### MySQL
-Utilizado como banco de dados relacional da aplicação.
+### 2.4 Prisma ORM
 
-### JSON Web Token
-Utilizado para autenticação dos usuários.
+Utilizado como camada de acesso aos dados, definição dos modelos, relacionamentos e migrations.
 
-### bcrypt
-Utilizado para geração e verificação do hash das senhas.
+### 2.5 MySQL
 
-### Git e GitHub
-Utilizados para versionamento e armazenamento remoto do código-fonte.
+Utilizado como sistema de gerenciamento de banco de dados relacional.
+
+### 2.6 JSON Web Token - JWT
+
+Utilizado para autenticação de usuários em endpoints protegidos.
+
+### 2.7 bcrypt
+
+Utilizado para geração e validação de hashes de senha.
+
+### 2.8 Swagger / OpenAPI
+
+Utilizado para documentação interativa dos contratos da API.
+
+### 2.9 Insomnia
+
+Utilizado para testes manuais dos endpoints e validação dos cenários positivos e negativos.
+
+### 2.10 Git e GitHub
+
+Utilizados para versionamento do código-fonte e armazenamento remoto do projeto.
 
 ---
 
-## 3. Organização em Camadas
+# 3. Organização em Camadas
 
-O projeto está dividido nas seguintes camadas:
+A aplicação adota uma estrutura semelhante a uma arquitetura em camadas.
 
-### 3.1 Routes
+## 3.1 Routes
 
-Responsáveis pela definição dos endpoints da API.
+As rotas representam a camada de entrada HTTP da aplicação.
+
+São responsáveis por:
+
+- definir método HTTP e URL;
+- associar a rota ao controller correspondente;
+- aplicar middleware de autenticação;
+- aplicar middleware de autorização;
+- disponibilizar documentação Swagger/OpenAPI.
 
 Exemplos:
 
-- `auth.routes.ts`
-- `unidade.routes.ts`
-- `produto.routes.ts`
+```text
+auth.routes.ts
+unidade.routes.ts
+produto.routes.ts
+estoque.routes.ts
+pedido.routes.ts
+fidelidade.routes.ts
+auditoria.routes.ts
 
-As rotas também são responsáveis por definir quais middlewares devem ser executados antes da chamada do controller.
+3.2 Controllers
 
-Exemplo:
+Os controllers são responsáveis por receber as requisições HTTP e realizar validações relacionadas ao contrato da API.
 
-`POST /unidades`
+Entre suas responsabilidades estão:
 
-Fluxo:
-
-Router  
-→ Middleware de autenticação  
-→ Middleware de autorização  
-→ Controller
-
----
-
-### 3.2 Controllers
-
-Os controllers são responsáveis por receber as requisições HTTP, validar os dados básicos recebidos e retornar as respostas HTTP.
-
-Exemplos:
-
-- `auth.controller.ts`
-- `unidade.controller.ts`
-
-Os controllers não devem concentrar regras complexas de negócio.
-
-Eles atuam como intermediários entre a camada HTTP e a camada de serviços.
-
----
-
-### 3.3 Services
-
-A camada de services concentra as regras de negócio da aplicação.
+leitura de parâmetros;
+leitura do body;
+validações básicas;
+chamada dos services;
+definição dos status HTTP;
+montagem das respostas JSON;
+tratamento dos erros esperados.
 
 Exemplos:
 
-- validação de usuário existente;
-- criação de usuário;
-- consulta de unidade;
-- criação de produtos;
-- validação de estoque;
-- criação de pedidos;
-- processamento do pagamento mock.
+auth.controller.ts
+unidade.controller.ts
+produto.controller.ts
+estoque.controller.ts
+pedido.controller.ts
+pagamento.controller.ts
+fidelidade.controller.ts
+auditoria.controller.ts
 
-Exemplos de arquivos:
+Os controllers evitam concentrar regras complexas de negócio.
 
-- `usuario.service.ts`
-- `unidade.service.ts`
-- `produto.service.ts`
-- `estoque.service.ts`
-- `pedido.service.ts`
+3.3 Services
 
----
+A camada de services concentra as principais regras de negócio da aplicação.
 
-### 3.4 Persistência
+Entre as operações executadas nessa camada estão:
+
+criação e autenticação de usuários;
+consulta e criação de unidades;
+gerenciamento de produtos;
+controle de estoque;
+registro de movimentações;
+criação de pedidos;
+validação do estoque;
+cálculo dos valores do pedido;
+processamento de pagamento mock;
+controle do fluxo de status;
+concessão de pontos de fidelidade;
+geração de registros de auditoria.
+
+Exemplos:
+
+usuario.service.ts
+unidade.service.ts
+produto.service.ts
+estoque.service.ts
+pedido.service.ts
+pagamento.service.ts
+fidelidade.service.ts
+auditoria.service.ts
+3.4 Persistência
 
 A persistência é realizada através do Prisma ORM.
 
 O Prisma é responsável por:
 
-- comunicação com o MySQL;
-- definição dos modelos;
-- consultas;
-- inserções;
-- atualizações;
-- exclusões;
-- relacionamentos;
-- migrations.
+comunicação com o MySQL;
+consultas;
+inserções;
+atualizações;
+exclusões;
+relacionamentos;
+integridade estrutural;
+gerenciamento de migrations.
 
-O arquivo principal de modelagem é:
+A modelagem principal está localizada em:
 
-`prisma/schema.prisma`
+prisma/schema.prisma
 
----
+As alterações do banco de dados são versionadas através de:
 
-### 3.5 Middlewares
+prisma/migrations/
+3.5 Middlewares
 
-Os middlewares são responsáveis por funções transversais da aplicação.
+Os middlewares são utilizados para funcionalidades transversais da aplicação.
 
-Exemplos:
+Atualmente são utilizados principalmente para:
 
-- autenticação JWT;
-- autorização por perfil;
-- tratamento futuro de logs;
-- validações reutilizáveis.
+autenticação JWT;
+autorização baseada em roles.
 
-Middlewares atuais:
+Arquivos:
 
-- `auth.middleware.ts`
-- `role.middleware.ts`
+auth.middleware.ts
+role.middleware.ts
 
----
+Exemplo:
 
-## 4. Estrutura do Projeto
+CLIENTE autenticado
+        ↓
+GET /auditorias
+        ↓
+authMiddleware
+        ↓
+permitirPerfis("ADMIN")
+        ↓
+403 Forbidden
 
-A organização principal do projeto é:
+Nesse caso, o usuário está autenticado, mas não possui autorização para acessar o recurso.
 
-```text
+4. Estrutura do Projeto
+
+A estrutura principal do projeto é:
+
 restaurante-api/
 │
 ├── docs/
+│   ├── arquitetura.md
+│   ├── testes.md
+│   └── demais documentos
 │
 ├── prisma/
 │   ├── migrations/
@@ -161,99 +216,369 @@ restaurante-api/
 ├── src/
 │   ├── @types/
 │   ├── config/
+│   │   ├── prisma.ts
+│   │   └── swagger.ts
+│   │
 │   ├── controllers/
+│   │   ├── auth.controller.ts
+│   │   ├── unidade.controller.ts
+│   │   ├── produto.controller.ts
+│   │   ├── estoque.controller.ts
+│   │   ├── pedido.controller.ts
+│   │   ├── pagamento.controller.ts
+│   │   ├── fidelidade.controller.ts
+│   │   └── auditoria.controller.ts
+│   │
 │   ├── middlewares/
+│   │   ├── auth.middleware.ts
+│   │   └── role.middleware.ts
+│   │
 │   ├── routes/
+│   │   ├── auth.routes.ts
+│   │   ├── unidade.routes.ts
+│   │   ├── produto.routes.ts
+│   │   ├── estoque.routes.ts
+│   │   ├── pedido.routes.ts
+│   │   ├── fidelidade.routes.ts
+│   │   └── auditoria.routes.ts
+│   │
 │   ├── services/
+│   │   ├── usuario.service.ts
+│   │   ├── unidade.service.ts
+│   │   ├── produto.service.ts
+│   │   ├── estoque.service.ts
+│   │   ├── pedido.service.ts
+│   │   ├── pagamento.service.ts
+│   │   ├── fidelidade.service.ts
+│   │   └── auditoria.service.ts
+│   │
 │   └── server.ts
 │
 ├── .env
 ├── .env.example
 ├── .gitignore
+├── README.md
 ├── package.json
 ├── prisma.config.ts
-├── tsconfig.json
-└── README.md
+└── tsconfig.json
 5. Fluxo de uma Requisição
 
-Exemplo de criação de unidade:
+Exemplo de entrada de estoque:
 
 Cliente HTTP
-→ POST /unidades
-→ authMiddleware
-→ permitirPerfis("ADMIN")
-→ unidade.controller.ts
-→ unidade.service.ts
-→ Prisma ORM
-→ MySQL
-→ resposta HTTP
+        ↓
+POST /estoques/entrada
+        ↓
+authMiddleware
+        ↓
+permitirPerfis("ADMIN")
+        ↓
+estoque.controller.ts
+        ↓
+estoque.service.ts
+        ↓
+Prisma ORM
+        ↓
+MySQL
+        ↓
+movimentação de estoque
+        ↓
+resposta HTTP
 
-Esse fluxo demonstra a separação entre autenticação, autorização, tratamento HTTP, regra de negócio e persistência.
+Esse fluxo demonstra a separação entre autenticação, autorização, contrato HTTP, regra de negócio e persistência.
 
-6. Fluxo Crítico Planejado
+6. Fluxo Crítico Implementado
 
-O fluxo principal da aplicação será baseado na criação de pedidos.
-
-Fluxo:
+O principal fluxo de negócio implementado na aplicação é o fluxo de pedidos.
 
 Usuário autenticado
-→ criação do pedido
-→ validação da unidade
-→ validação dos produtos
-→ validação do estoque
-→ cálculo do total
-→ registro do canal do pedido
-→ criação do pedido
-→ pagamento mock
-→ atualização de status
-→ atualização de estoque
-→ registro de auditoria
+        ↓
+Criação do pedido
+        ↓
+Validação da unidade
+        ↓
+Validação dos produtos
+        ↓
+Validação das quantidades
+        ↓
+Validação do estoque
+        ↓
+Consulta dos preços no banco
+        ↓
+Cálculo dos subtotais
+        ↓
+Cálculo do valor total
+        ↓
+Registro do canalPedido
+        ↓
+Pedido PENDENTE
+        ↓
+Auditoria: PEDIDO_CRIADO
+        ↓
+Pagamento Mock
+       / \
+      /   \
+APROVADO  RECUSADO
+   ↓          ↓
+CONFIRMADO  CANCELADO
+   ↓
+Baixa do estoque
+   ↓
+Movimentação SAIDA
+   ↓
+Auditoria de pagamento
+   ↓
+EM_PREPARO
+   ↓
+PRONTO
+   ↓
+FINALIZADO
+   ↓
+Pontos de fidelidade
+   ↓
+Auditoria
 
-Esse fluxo foi escolhido por integrar as principais regras de negócio do sistema.
+Esse fluxo integra as principais funcionalidades da API e representa o MVP crítico escolhido para a entrega.
 
-7. Segurança
+7. Multicanalidade
+
+O canal de origem do pedido faz parte do domínio da aplicação.
+
+O campo:
+
+canalPedido
+
+é obrigatório durante a criação do pedido.
+
+Os canais atualmente implementados são:
+
+APP
+BALCAO
+DELIVERY
+
+Exemplo:
+
+{
+  "unidadeId": 1,
+  "canalPedido": "APP",
+  "itens": [
+    {
+      "produtoId": 1,
+      "quantidade": 1
+    }
+  ]
+}
+
+Também é possível realizar consultas utilizando o canal como filtro:
+
+GET /pedidos?canalPedido=APP
+
+Isso permite rastrear a origem dos pedidos e consolidar informações por canal.
+
+8. Controle de Estoque
+
+O estoque é mantido separadamente por unidade e produto.
+
+A combinação:
+
+unidadeId + produtoId
+
+identifica o saldo de determinado produto em uma unidade.
+
+O sistema implementa:
+
+consulta de estoque;
+entrada;
+saída;
+histórico de movimentações;
+validação de estoque insuficiente;
+registro do usuário responsável.
+
+Uma saída não pode resultar em saldo negativo.
+
+Quando a quantidade disponível é insuficiente, a API retorna:
+
+409 Conflict
+
+com erro:
+
+{
+  "error": "ESTOQUE_INSUFICIENTE",
+  "message": "Não há estoque suficiente para realizar esta saída."
+}
+9. Pagamento Mock
+
+A integração de pagamento é simulada.
+
+O endpoint:
+
+POST /pedidos/:id/pagamento
+
+permite enviar:
+
+PIX
+CARTAO
+
+e simular os resultados:
+
+APROVADO
+RECUSADO
+
+O objetivo é representar o comportamento de uma integração externa sem utilizar um provedor financeiro real.
+
+Em caso de pagamento aprovado:
+
+PENDENTE
+   ↓
+CONFIRMADO
+
+Em caso de pagamento recusado:
+
+PENDENTE
+   ↓
+CANCELADO
+
+O sistema também impede o processamento de pagamento duplicado para o mesmo pedido.
+
+10. Fluxo de Status do Pedido
+
+Após pagamento aprovado, o pedido segue o fluxo:
+
+CONFIRMADO
+     ↓
+EM_PREPARO
+     ↓
+PRONTO
+     ↓
+FINALIZADO
+
+A API bloqueia transições que não estejam previstas.
+
+Exemplo inválido:
+
+CONFIRMADO → FINALIZADO
+
+Resultado:
+
+409 Conflict
+
+Essa regra evita inconsistências no processo operacional.
+
+11. Fidelização
+
+A aplicação possui um sistema simples de fidelização.
+
+Cada usuário possui um saldo de pontos.
+
+Os pontos são concedidos após a finalização do pedido.
+
+Regra utilizada:
+
+R$ 1,00 gasto = 1 ponto
+
+A parte decimal é desconsiderada no cálculo dos pontos.
+
+Exemplo:
+
+Pedido: R$ 32,90
+Pontos concedidos: 32
+
+O usuário autenticado pode consultar seu saldo através de:
+
+GET /fidelidade/saldo
+
+O sistema também mantém controle para evitar o crédito duplicado dos pontos do mesmo pedido.
+
+12. Auditoria
+
+A aplicação registra eventos relacionados a ações sensíveis.
+
+Entre as ações registradas estão:
+
+PEDIDO_CRIADO
+PAGAMENTO_APROVADO
+PAGAMENTO_RECUSADO
+STATUS_PEDIDO_ALTERADO
+PONTOS_FIDELIDADE_CREDITADOS
+
+Cada registro pode conter:
+
+usuário responsável;
+ação realizada;
+entidade afetada;
+identificador da entidade;
+detalhes adicionais;
+data e hora.
+
+A consulta dos registros é realizada por:
+
+GET /auditorias
+
+e é restrita ao perfil:
+
+ADMIN
+
+A auditoria melhora a rastreabilidade das operações realizadas no sistema.
+
+13. Segurança
 
 A aplicação utiliza autenticação baseada em JWT.
 
 Após o login, o usuário recebe um token que deve ser enviado nos endpoints protegidos.
 
-Também existe controle de acesso baseado em perfis.
+Exemplo:
 
-Perfis:
+Authorization: Bearer TOKEN
+
+Os perfis definidos são:
 
 ADMIN
 GERENTE
 ATENDENTE
 CLIENTE
 
-Exemplo:
+As permissões são aplicadas nas rotas conforme a responsabilidade de cada perfil.
 
-Um usuário do perfil CLIENTE pode estar autenticado, mas não possui autorização para cadastrar uma nova unidade.
+As senhas são armazenadas utilizando hash através do bcrypt.
 
-Nesse caso, a API retorna:
+A senha original não é persistida diretamente no banco.
 
-403 Forbidden
+As credenciais de banco e o segredo JWT são mantidos em variáveis de ambiente.
 
-As senhas dos usuários são armazenadas utilizando hash e nunca devem ser retornadas nas respostas da API.
+O arquivo:
 
-8. Banco de Dados
+.env
 
-O banco de dados é relacional e utiliza MySQL.
+não é versionado no repositório.
 
-O Prisma ORM é utilizado para garantir coerência entre:
+Um arquivo:
 
-modelos;
-relacionamentos;
-migrations;
-regras da aplicação.
+.env.example
 
-As alterações do banco são versionadas através de migrations e enviadas ao repositório Git.
+é disponibilizado apenas com valores fictícios para facilitar a configuração do ambiente.
 
-9. Tratamento de Erros
+14. LGPD e Privacidade
 
-A API utiliza códigos HTTP coerentes com cada situação.
+A aplicação aplica cuidados técnicos relacionados à proteção de dados pessoais.
 
-Exemplos:
+Entre eles:
+
+minimização dos dados utilizados pela aplicação;
+armazenamento de senha apenas em formato de hash;
+autenticação antes de acessar informações protegidas;
+autorização por perfil;
+controle de acesso a registros administrativos;
+auditoria de ações relevantes;
+não exposição de segredos nas respostas;
+armazenamento de credenciais em variáveis de ambiente.
+
+Por se tratar de um projeto acadêmico, a solução representa uma aplicação técnica dos princípios básicos de proteção de dados, e não uma certificação formal de conformidade jurídica.
+
+15. Tratamento de Erros
+
+A API utiliza códigos HTTP de acordo com o tipo de resultado.
+
+Principais códigos:
 
 200 OK
 201 Created
@@ -265,57 +590,142 @@ Exemplos:
 422 Unprocessable Entity
 500 Internal Server Error
 
-O projeto adota um formato de erro baseado em:
+O padrão de resposta de erro utilizado é:
 
 {
   "error": "CODIGO_DO_ERRO",
-  "message": "Descrição legível do erro"
+  "message": "Descrição legível do erro."
 }
 
-O formato poderá ser expandido posteriormente com:
+Exemplos:
 
-detalhes;
-timestamp;
-path;
-requestId.
-10. Decisões Arquiteturais
-Separação entre Controller e Service
+CAMPOS_OBRIGATORIOS
+NAO_AUTENTICADO
+ACESSO_NEGADO
+PRODUTO_INVALIDO
+ESTOQUE_INSUFICIENTE
+PAGAMENTO_JA_PROCESSADO
+TRANSICAO_STATUS_INVALIDA
+QUANTIDADE_INVALIDA
+16. Documentação da API
 
-A lógica de negócio é mantida nos services para evitar controllers excessivamente grandes e difíceis de manter.
+A API utiliza Swagger/OpenAPI.
 
-Prisma como camada de persistência
+Com o servidor em execução, a documentação pode ser acessada em:
 
-O Prisma foi escolhido por oferecer tipagem, migrations e integração direta com TypeScript.
+http://localhost:3000/docs/
 
-JWT
+A documentação contempla os módulos:
 
-O JWT foi escolhido por permitir autenticação stateless e integração simples com APIs REST.
+Autenticação
+Unidades
+Produtos
+Estoque
+Pedidos
+Fidelidade
+Auditoria
 
-Controle por Roles
+O Swagger também permite inserir o JWT através da opção:
 
-A autorização por perfis foi adotada porque diferentes tipos de usuários possuem responsabilidades diferentes na aplicação.
+Authorize
 
-Variáveis de ambiente
+permitindo testar endpoints protegidos diretamente pela interface.
 
-Credenciais, segredos JWT e dados de conexão com o banco são armazenados em variáveis de ambiente e não são enviados para o repositório público.
+17. Testes
 
-11. Evolução Planejada
+Os endpoints foram testados utilizando Insomnia e Swagger.
 
-A arquitetura permite adicionar novos módulos sem alterar drasticamente os módulos existentes.
+Foram executados cenários positivos e negativos.
 
-Próximos módulos previstos:
+Entre os status HTTP validados estão:
 
-Produtos;
-Estoque;
-Pedidos;
-Pagamentos;
-Fidelização;
-Auditoria;
-Swagger;
-Testes.
+200
+201
+400
+401
+403
+404
+409
+422
 
-### Auditoria de Estoque
+Entre os cenários testados estão:
 
-As entradas e saídas de estoque geram automaticamente registros de movimentação contendo usuário responsável, unidade, produto, tipo de operação, quantidade e data/hora.
+login válido;
+token inválido;
+acesso sem permissão;
+criação de pedido;
+filtro de pedido por canal;
+produto inexistente;
+quantidade negativa;
+estoque insuficiente;
+pagamento aprovado;
+pagamento recusado;
+pagamento duplicado;
+transição inválida de status;
+SKU duplicado;
+consulta de auditoria;
+fidelização.
+18. Decisões Arquiteturais
+18.1 Separação entre Controller e Service
 
-O usuário responsável é obtido a partir do JWT autenticado, evitando que o cliente da API informe manualmente o identificador do responsável pela ação.
+Os controllers foram mantidos responsáveis principalmente pelo contrato HTTP.
+
+As regras de negócio são concentradas nos services.
+
+Essa separação reduz o acoplamento e facilita futuras alterações.
+
+18.2 Prisma ORM
+
+O Prisma foi escolhido devido à integração com TypeScript, suporte a migrations e facilidade de manipulação de relacionamentos.
+
+18.3 JWT
+
+JWT foi utilizado para permitir autenticação stateless na API.
+
+18.4 Controle de acesso por Roles
+
+A autorização baseada em perfis foi utilizada porque diferentes usuários possuem responsabilidades diferentes.
+
+Exemplo:
+
+CLIENTE
+
+pode realizar pedidos, mas não deve acessar recursos administrativos como auditoria.
+
+18.5 Variáveis de ambiente
+
+Informações sensíveis são armazenadas fora do código-fonte.
+
+Exemplos:
+
+DATABASE_URL
+DB_PASSWORD
+JWT_SECRET
+JWT_EXPIRES_IN
+PORT
+18.6 Auditoria
+
+As ações sensíveis são registradas para aumentar a rastreabilidade do sistema.
+
+O usuário responsável é obtido através do JWT autenticado, evitando que o cliente informe manualmente o responsável pela operação.
+
+19. Estado Atual da Solução
+
+Os principais módulos previstos para o MVP foram implementados:
+
+autenticação;
+autorização;
+unidades;
+produtos;
+estoque;
+movimentações;
+pedidos;
+multicanalidade;
+pagamento mock;
+controle de status;
+fidelização;
+auditoria;
+documentação Swagger;
+testes positivos e negativos.
+
+A solução possui persistência real em MySQL através do Prisma ORM e implementa o fluxo crítico de pedidos de ponta a ponta.
